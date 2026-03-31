@@ -1,164 +1,119 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useMemo } from "react";
+import { Search, Phone, Star, MapPin, ChevronRight, MessageSquare, Briefcase, Zap, Filter } from "lucide-react";
+import { motion, AnimatePresence } from "framer-motion";
 import leadsData from "@/data/leads.json";
-import { Search, Phone, CheckCircle2, User, Building2, MapPin, MessageSquare, AlertCircle, Bookmark, Trash2, ExternalLink } from "lucide-react";
+import { useCRM } from "@/context/CRMContext";
 
-type LeadStatus = "new" | "called" | "booked" | "ignored";
+export default function LeadList() {
+  const [search, setSearch] = useState("");
+  const { activeLead, setActiveLead, leadNotes, updateLeadNote } = useCRM();
 
-interface LeadNotes {
-  status: LeadStatus;
-  comment: string;
-}
-
-export default function LeadList({ onSelectLead, activeEmail }: { onSelectLead: (lead: any) => void, activeEmail?: string }) {
-  const [searchTerm, setSearchTerm] = useState("");
-  const [leadNotes, setLeadNotes] = useState<Record<string, LeadNotes>>({});
-
-  useEffect(() => {
-    const saved = localStorage.getItem("spine-empire-lead-notes");
-    if (saved) setLeadNotes(JSON.parse(saved));
-  }, []);
-
-  const updateLeadNote = (email: string, updates: Partial<LeadNotes>) => {
-    const updated = { 
-      ...leadNotes, 
-      [email]: { ...(leadNotes[email] || { status: "new", comment: "" }), ...updates } 
-    };
-    setLeadNotes(updated);
-    localStorage.setItem("spine-empire-lead-notes", JSON.stringify(updated));
-  };
-
-  const getStatusColor = (status: LeadStatus) => {
-    switch (status) {
-      case "booked": return "text-green-500 border-green-500/50 bg-green-500/10";
-      case "ignored": return "text-red-500 border-red-500/50 bg-red-500/10";
-      case "called": return "text-yellow-500 border-yellow-500/50 bg-yellow-500/10";
-      default: return "text-primary border-primary/50 bg-primary/10";
-    }
-  };
-
-  const formatGVPhone = (phone: string) => {
-    const clean = phone.replace(/\D/g, '');
-    return clean.startsWith('1') ? clean : `1${clean}`;
-  };
-
-  const filteredLeads = leadsData.filter((l) =>
-    l["Practice Name"].toLowerCase().includes(searchTerm.toLowerCase()) ||
-    l["Email"].toLowerCase().includes(searchTerm.toLowerCase()) ||
-    l["First Name"].toLowerCase().includes(searchTerm.toLowerCase())
-  );
+  const filteredLeads = useMemo(() => {
+    return leadsData.filter(lead => 
+      lead["Practice Name"].toLowerCase().includes(search.toLowerCase()) ||
+      lead.City.toLowerCase().includes(search.toLowerCase())
+    ).slice(0, 50);
+  }, [search]);
 
   return (
-    <div className="flex flex-col h-full gap-6">
-      <div className="relative group">
-        <div className="absolute inset-y-0 left-3 flex items-center pointer-events-none text-gray-500 group-focus-within:text-primary transition-colors">
-          <Search size={18} />
+    <div className="flex flex-col h-full gap-8">
+      {/* Minimal Elite Search Header */}
+      <div className="flex flex-col md:flex-row gap-4 items-center">
+        <div className="relative flex-1">
+          <Search className="absolute left-6 top-1/2 -translate-y-1/2 text-muted-foreground" size={18} />
+          <input 
+            type="text" 
+            placeholder="Search Target Clinics..." 
+            value={search}
+            onChange={(e) => setSearch(e.target.value)}
+            className="w-full bg-secondary/50 border border-glass-border rounded-xl py-5 pl-14 pr-8 text-xs font-bold tracking-widest uppercase focus:border-foreground outline-none transition-all"
+          />
         </div>
-        <input
-          type="text"
-          placeholder="Search 982 leads by clinic, owner, or email..."
-          className="w-full bg-glass border border-glass-border rounded-xl py-3 pl-10 pr-4 focus:outline-none focus:ring-1 focus:ring-primary transition-all backdrop-blur-md"
-          value={searchTerm}
-          onChange={(e) => setSearchTerm(e.target.value)}
-        />
+        <div className="flex items-center gap-2">
+          <button className="p-4 bg-background border border-glass-border rounded-xl hover:border-black transition-all active:scale-95"><Filter size={18} /></button>
+          <button className="px-6 py-4 bg-black text-white dark:bg-white dark:text-black font-bold text-[10px] uppercase tracking-widest rounded-xl hover:opacity-90 active:scale-95 transition-all shadow-md">
+             982 Targets
+          </button>
+        </div>
       </div>
 
-      <div className="flex-1 overflow-y-auto space-y-4 pr-2 hide-scrollbar pb-12">
-        {filteredLeads.slice(0, 100).map((lead, idx) => {
-          const email = lead["Email"];
-          const notes = leadNotes[email] || { status: "new", comment: "" };
-          const isActive = activeEmail === email;
+      {/* Grid of Minimal Lead Cards */}
+      <div className="flex-1 overflow-y-auto pr-2 space-y-4 hide-scrollbar">
+        <AnimatePresence mode="popLayout">
+          {filteredLeads.map((lead, idx) => {
+             const isActive = activeLead?.Email === lead.Email;
+             const notes = leadNotes[lead.Email];
+             const status = notes?.status || "new";
+             const reviews = parseInt(lead["Google Reviews"]?.toString() || "0");
 
-          return (
-            <div 
-              key={idx} 
-              onClick={() => onSelectLead(lead)}
-              className={`glass-card p-6 grid grid-cols-1 md:grid-cols-3 gap-6 group hover:translate-x-1 transition-all cursor-pointer ${isActive ? 'border-primary ring-1 ring-primary/30 ring-inset' : ''}`}
-            >
-              <div className="flex flex-col gap-3">
-                <div className="flex justify-between items-start">
-                  <div className="flex flex-col">
-                    <span className={`text-[10px] font-black tracking-widest uppercase mb-1 border px-2 py-0.5 rounded-full w-fit ${getStatusColor(notes.status)}`}>
-                      {notes.status}
-                    </span>
-                    <h3 className="font-black text-lg group-hover:text-primary transition-colors line-clamp-1">
-                      {lead["Practice Name"]}
-                    </h3>
-                  </div>
-                </div>
-                <div className="space-y-1.5 text-xs text-gray-500 font-medium">
-                  <div className="flex items-center gap-2">
-                    <User size={12} className="text-primary/70" />
-                    <span className="font-bold text-foreground">{lead["First Name"]} (Owner)</span>
-                  </div>
-                  <div className="flex items-center gap-2">
-                    <MapPin size={12} />
-                    <span>{lead["City"]}, {lead["State"]}</span>
-                  </div>
-                  <div className="flex items-center gap-2 overflow-hidden">
-                    <AlertCircle size={12} />
-                    <span className="truncate opacity-80">{lead["Email"]}</span>
-                  </div>
-                </div>
-                
-                <a 
-                  href={`https://voice.google.com/u/0/calls?a=nc,%2B${formatGVPhone(lead["Phone"])}`}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  onClick={(e) => e.stopPropagation()}
-                  className="mt-2 w-full bg-primary text-black font-black py-2.5 rounded-xl flex items-center justify-center gap-1.5 hover:brightness-110 active:scale-95 transition-all shadow-lg hover:shadow-primary/20"
-                >
-                  <Phone size={14} />
-                  GOOGLE VOICE <ExternalLink size={12} />
-                </a>
-              </div>
+             return (
+               <motion.div
+                 key={lead.Email}
+                 initial={{ opacity: 0, y: 10 }}
+                 animate={{ opacity: 1, y: 0 }}
+                 transition={{ delay: idx * 0.03 }}
+                 onClick={() => setActiveLead(lead)}
+                 className={`glass-card p-0 overflow-hidden cursor-pointer group border ${
+                   isActive ? 'ring-2 ring-black dark:ring-white ring-offset-2 ring-offset-background' : ''
+                 }`}
+               >
+                 <div className="flex flex-col md:flex-row items-stretch">
+                    {/* Status Dot Logic */}
+                    <div className={`w-1.5 md:w-2 ${
+                      status === 'booked' ? 'bg-green-500' : 
+                      status === 'called' ? 'bg-yellow-500' : 
+                      status === 'ignored' ? 'bg-red-500' : 'bg-muted-foreground/10'
+                    }`} />
 
-              <div className="flex flex-col gap-3">
-                <span className="text-[10px] text-gray-500 font-black tracking-widest uppercase">Pipeline Stage</span>
-                <div className="grid grid-cols-2 gap-2">
-                  <button 
-                    onClick={(e) => { e.stopPropagation(); updateLeadNote(email, { status: "called" }); }}
-                    className={`flex items-center justify-center gap-2 py-2 rounded-lg border text-xs font-bold transition-all ${notes.status === 'called' ? 'bg-yellow-500/20 border-yellow-500 text-yellow-500' : 'border-glass-border text-gray-500 hover:text-white'}`}
-                  >
-                    <Bookmark size={12} /> Called
-                  </button>
-                  <button 
-                    onClick={(e) => { e.stopPropagation(); updateLeadNote(email, { status: "booked" }); }}
-                    className={`flex items-center justify-center gap-2 py-2 rounded-lg border text-xs font-bold transition-all ${notes.status === 'booked' ? 'bg-green-500/20 border-green-500 text-green-500' : 'border-glass-border text-gray-500 hover:text-white'}`}
-                  >
-                    <CheckCircle2 size={12} /> Booked
-                  </button>
-                  <button 
-                    onClick={(e) => { e.stopPropagation(); updateLeadNote(email, { status: "ignored" }); }}
-                    className={`flex items-center justify-center gap-2 py-2 rounded-lg border text-xs font-bold transition-all ${notes.status === 'ignored' ? 'bg-red-500/20 border-red-500 text-red-500' : 'border-glass-border text-gray-500 hover:text-white'}`}
-                  >
-                    <Trash2 size={12} /> Ignore
-                  </button>
-                  <button 
-                     onClick={(e) => { e.stopPropagation(); updateLeadNote(email, { status: "new" }); }}
-                     className={`flex items-center justify-center gap-2 py-2 rounded-lg border text-xs font-bold transition-all ${notes.status === 'new' ? 'bg-primary/20 border-primary text-primary' : 'border-glass-border text-gray-500 hover:text-white'}`}
-                  >
-                    Reset
-                  </button>
-                </div>
-              </div>
+                    <div className="flex-1 p-6 flex flex-col md:flex-row justify-between items-center gap-6">
+                       <div className="flex items-center gap-6 flex-1">
+                          <div className="w-16 h-16 bg-secondary/50 rounded-xl flex items-center justify-center text-center border border-glass-border">
+                             <Briefcase size={24} className="text-muted-foreground" />
+                          </div>
 
-              <div className="flex flex-col gap-3">
-                <span className="text-[10px] text-gray-500 font-black tracking-widest uppercase flex items-center gap-1">
-                  <MessageSquare size={10} /> Call Notes
-                </span>
-                <textarea 
-                  value={notes.comment}
-                  onClick={(e) => e.stopPropagation()}
-                  onChange={(e) => { e.stopPropagation(); updateLeadNote(email, { comment: e.target.value }); }}
-                  placeholder="Note: Gatekeeper, best time, etc..."
-                  className="w-full h-full min-h-[80px] bg-foreground/5 border border-glass-border rounded-xl p-3 text-xs text-foreground font-medium focus:outline-none focus:border-primary transition-all resize-none placeholder:opacity-50"
-                />
-              </div>
-            </div>
-          );
-        })}
+                          <div className="flex flex-col gap-1">
+                             <div className="flex items-center gap-2">
+                                <h3 className="text-lg font-bold tracking-tight uppercase leading-tight">{lead["Practice Name"]}</h3>
+                                {reviews > 110 && (
+                                   <Star size={12} className="text-black/20 dark:text-white/20 fill-current" />
+                                )}
+                             </div>
+                             <div className="flex items-center gap-4 text-[10px] font-bold text-muted-foreground uppercase tracking-widest leading-none">
+                                <span className="flex items-center gap-1.5"><MapPin size={12} /> {lead.City}</span>
+                                <span className="flex items-center gap-1.5 opacity-60"><Zap size={12} /> {reviews} REW</span>
+                             </div>
+                          </div>
+                       </div>
+
+                       <div className="flex items-center gap-3 w-full md:w-auto">
+                          {notes?.comment && (
+                             <MessageSquare size={16} className="text-muted-foreground opacity-40" />
+                          )}
+
+                          <a 
+                            href={`https://voice.google.com/u/0/calls?a=nc,%2B1${lead.Phone.replace(/\D/g, '')}`}
+                            target="_blank"
+                            className="flex-1 md:flex-none bg-black text-white dark:bg-white dark:text-black font-bold uppercase text-[10px] tracking-widest px-8 py-4 rounded-xl flex items-center gap-3 hover:translate-y-[-1px] transition-all shadow-sm active:translate-y-0"
+                            onClick={(e) => {
+                                e.stopPropagation();
+                                updateLeadNote(lead.Email, { status: "called" });
+                            }}
+                          >
+                             <Phone size={16} strokeWidth={2.5} /> CALL 
+                          </a>
+
+                          <div className="p-4 bg-secondary rounded-xl border border-glass-border hover:border-black transition-all">
+                             <ChevronRight size={20} className="text-muted-foreground" />
+                          </div>
+                       </div>
+                    </div>
+                 </div>
+               </motion.div>
+             );
+          })}
+        </AnimatePresence>
       </div>
     </div>
   );

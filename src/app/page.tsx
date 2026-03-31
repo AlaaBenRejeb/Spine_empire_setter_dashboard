@@ -1,7 +1,7 @@
 "use client";
 
 import { motion } from "framer-motion";
-import { PhoneCall, Calendar, Target, TrendingUp, BarChart3, Sun, Moon, CheckSquare } from "lucide-react";
+import { PhoneCall, Calendar, Target, TrendingUp, BarChart3, Sun, Moon, CheckSquare, Zap, Activity } from "lucide-react";
 import LeadList from "@/components/LeadList";
 import PersonalTasks from "@/components/PersonalTasks";
 import { useTheme } from "@/context/ThemeContext";
@@ -9,7 +9,7 @@ import { useCRM } from "@/context/CRMContext";
 
 export default function Dashboard() {
   const { theme, toggleTheme } = useTheme();
-  const { activeLead, setActiveLead, leadNotes } = useCRM();
+  const { leadNotes } = useCRM();
 
   const notes = Object.values(leadNotes);
   const totalDials = notes.filter(n => n.status !== "new").length;
@@ -17,104 +17,110 @@ export default function Dashboard() {
   const totalLeads = 982;
 
   const stats = [
-    { label: "Total Target Pool", value: totalLeads.toString(), icon: <Target className={`${theme === 'dark' ? 'text-primary' : 'text-blue-600'}`} />, desc: "Elite Spine Pool" },
-    { label: "Dials Today", value: totalDials.toString(), icon: <PhoneCall className="text-green-500" />, desc: "Real Volume" },
-    { label: "Booked Demos", value: totalBooked.toString(), icon: <Calendar className="text-purple-500" />, desc: "Win Potential" },
-    { label: "Pipeline Value", value: `$${(totalBooked * 4000).toLocaleString()}`, icon: <TrendingUp className="text-yellow-500" />, desc: "Projected MRR" }
+    { label: "Target Market", value: totalLeads.toString(), icon: <Target />, color: "text-foreground", desc: "Total Pool" },
+    { label: "Dials Today", value: totalDials.toString(), icon: <PhoneCall />, color: "text-foreground", desc: "Outreach" },
+    { label: "Demos Booked", value: totalBooked.toString(), icon: <Calendar />, color: "text-foreground", desc: "Success" },
+    { label: "Win Opportunity", value: `$${(totalBooked * 4000).toLocaleString()}`, icon: <TrendingUp />, color: "text-foreground", desc: "Projected" }
   ];
 
   return (
-    <div className="flex-1 flex flex-col gap-8 p-4 md:p-8 overflow-hidden">
-      {/* Header */}
-      <header className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
-        <div className="flex flex-col">
+    <div className="flex-1 flex flex-col gap-10 p-8 md:p-12 overflow-y-auto hide-scrollbar h-screen">
+      {/* Minimal Elite Header */}
+      <header className="flex flex-col md:flex-row justify-between items-center gap-6">
+        <div className="flex flex-col gap-1">
           <motion.h1 
-            initial={{ opacity: 0, x: -20 }}
-            animate={{ opacity: 1, x: 0 }}
-            className="text-4xl md:text-5xl font-black mb-1 p-1 tracking-tight"
+            initial={{ opacity: 0, y: 10 }}
+            animate={{ opacity: 1, y: 0 }}
+            className="text-5xl md:text-6xl font-heading font-bold tracking-tight leading-none"
           >
-            Welcome back, <span className="text-primary glow-text">Alex.</span>
+            Welcome, Alex.
           </motion.h1>
-          <p className="text-gray-500 font-bold text-xs tracking-widest uppercase opacity-70 ml-1">Spine Empire Sales Command Center</p>
+          <p className="text-muted-foreground font-bold text-[10px] tracking-widest uppercase opacity-40 ml-1">Spine Empire Sales Engine</p>
         </div>
         
-        <div className="flex items-center gap-4">
-          {/* Theme Toggle */}
+        <div className="flex items-center gap-3">
           <button 
             onClick={toggleTheme}
-            className="bg-glass border border-glass-border p-3.5 rounded-2xl backdrop-blur-md hover:border-primary transition-all group active:scale-90 shadow-xl"
+            className="glass-card p-5 rounded-xl border border-glass-border hover:border-foreground active:scale-95 transition-all"
           >
             {theme === "dark" ? (
-              <Sun size={20} className="text-yellow-500 group-hover:scale-110 transition-transform" />
+              <Sun size={20} className="text-foreground" />
             ) : (
-              <Moon size={20} className="text-primary group-hover:scale-110 transition-transform" />
+              <Moon size={20} className="text-foreground" />
             )}
           </button>
-
-          <div className="flex items-center gap-4 bg-glass border border-glass-border px-6 py-3 rounded-2xl backdrop-blur-md shadow-xl">
-            <div className="w-2.5 h-2.5 bg-green-500 rounded-full animate-pulse shadow-sm shadow-green-400" />
-            <span className="text-xs font-black tracking-widest uppercase opacity-70">Live CRM Active</span>
+          <div className="glass-card px-8 py-5 rounded-xl flex items-center gap-4 border border-glass-border">
+            <Zap className="text-foreground" size={20} strokeWidth={2.5} />
+            <div className="flex flex-col">
+              <span className="text-[9px] font-bold uppercase tracking-widest opacity-40">Status</span>
+              <span className="text-xs font-bold tracking-widest uppercase">PRO ACTIVE</span>
+            </div>
           </div>
         </div>
       </header>
 
-      {/* Stats Grid */}
-      <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-4 gap-4">
+      {/* Minimal Stats Grid */}
+      <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-4 gap-6">
         {stats.map((stat, idx) => (
           <motion.div 
             key={idx}
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ delay: idx * 0.1 }}
-            className="glass-card p-6 flex flex-col gap-4 group"
+            className="glass-card p-8 flex flex-col gap-6"
           >
             <div className="flex justify-between items-start">
-              <span className="text-gray-500 text-[10px] font-black tracking-widest uppercase">{stat.label}</span>
-              <div className="p-2.5 bg-foreground/5 rounded-xl group-hover:bg-primary/20 transition-all">
+               <div className="flex flex-col gap-1">
+                  <span className="text-muted-foreground text-[10px] font-bold tracking-widest uppercase leading-none opacity-60">{stat.label}</span>
+                  <div className="text-4xl font-heading font-bold tracking-tight">{stat.value}</div>
+               </div>
+               <div className={`p-4 bg-secondary/50 rounded-xl border border-glass-border ${stat.color}`}>
                 {stat.icon}
               </div>
             </div>
-            <div>
-              <h2 className="text-4xl font-black mb-1 leading-tight tracking-tighter">{stat.value}</h2>
-              <span className="text-xs text-gray-500 font-bold opacity-70">{stat.desc}</span>
+            <div className="pt-4 border-t border-glass-border flex justify-between items-center text-[10px]">
+              <span className="text-muted-foreground font-bold uppercase tracking-widest opacity-40">{stat.desc}</span>
+              <div className="font-bold text-green-500 bg-green-500/5 px-3 py-1 rounded-full">+Active</div>
             </div>
           </motion.div>
         ))}
       </div>
 
-      {/* Main Dashboard Layout */}
-      <div className="flex-1 grid grid-cols-1 lg:grid-cols-3 h-[calc(100vh-480px)] lg:h-[calc(100vh-350px)] gap-6">
-        {/* Leads CRM Section (2/3 width) - Click lead to select it */}
-        <div className="lg:col-span-2 glass-card p-8 flex flex-col overflow-hidden">
-          <div className="flex justify-between items-center mb-8">
-            <h2 className="text-xl font-black flex items-center gap-3 tracking-tighter uppercase">
-              <BarChart3 className="text-primary" size={22} />
-              CRM LEAD PIPELINE
+      {/* Main CRM Workspace */}
+      <div className="flex-1 grid grid-cols-1 lg:grid-cols-3 gap-8 min-h-[700px] mb-20">
+        <div className="lg:col-span-2 glass-card p-10 flex flex-col overflow-hidden">
+          <div className="flex justify-between items-center mb-10">
+            <h2 className="text-xl font-heading font-bold flex items-center gap-4 tracking-tight uppercase leading-none">
+              <BarChart3 className="text-foreground opacity-20" size={24} />
+              CRM TARGET LIST
             </h2>
-            <div className="text-[10px] text-gray-500 font-black tracking-widest bg-foreground/5 px-5 py-2.5 rounded-full border border-glass-border hover:border-primary/50 transition-all cursor-crosshair">
-              REAL-TIME DATA ENABLED
-            </div>
           </div>
           
-          <div className="flex-1 overflow-hidden">
-            <LeadList 
-              onSelectLead={setActiveLead} 
-              activeEmail={activeLead?.Email} 
-            />
+          <div className="flex-1 overflow-hidden transition-all">
+            <LeadList />
           </div>
         </div>
 
-        {/* To-Do Section (1/3 width) */}
-        <div className="lg:col-span-1 glass-card p-8 flex flex-col overflow-hidden">
-           <div className="flex justify-between items-center mb-8">
-            <h2 className="text-xl font-black flex items-center gap-3 tracking-tighter uppercase">
-              <CheckSquare className="text-primary" size={22} />
-              TODAY'S WINS
-            </h2>
-          </div>
-          <div className="flex-1 overflow-hidden">
-            <PersonalTasks theme={theme} />
-          </div>
+        <div className="lg:col-span-1 flex flex-col gap-8">
+           <div className="glass-card p-10 flex flex-col overflow-hidden h-full">
+              <div className="flex justify-between items-center mb-10">
+                <h2 className="text-xl font-heading font-bold flex items-center gap-4 tracking-tight uppercase leading-none">
+                  <CheckSquare className="text-foreground opacity-20" size={24} />
+                  DAILY WINS
+                </h2>
+              </div>
+              <div className="flex-1 overflow-hidden transition-all">
+                <PersonalTasks theme={theme} />
+              </div>
+           </div>
+           
+           <div className="glass-card p-8 bg-secondary/30 flex items-center justify-between border-dashed border-2">
+              <div className="flex flex-col">
+                <span className="text-[10px] font-bold uppercase tracking-widest opacity-40 mb-1">Session Goal</span>
+                <span className="text-sm font-bold uppercase tracking-widest leading-none">70 DIALS COMPLETE</span>
+              </div>
+              <Activity size={24} className="text-muted-foreground opacity-20" />
+           </div>
         </div>
       </div>
     </div>

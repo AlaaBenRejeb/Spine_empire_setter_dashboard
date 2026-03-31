@@ -1,71 +1,96 @@
 "use client";
 
 import { motion } from "framer-motion";
-import { PhoneCall, User, MapPin, Clock, MessageSquare, History } from "lucide-react";
+import { PhoneCall, Calendar, Search, Filter, Phone, PhoneOutgoing, User, MessageSquare, MapPin } from "lucide-react";
 import { useCRM } from "@/context/CRMContext";
 import leadsData from "@/data/leads.json";
 
 export default function CallHistoryPage() {
   const { leadNotes } = useCRM();
 
-  const historyLeads = Object.entries(leadNotes)
-    .filter(([_, notes]) => notes.status !== "new")
+  const callLogs = Object.entries(leadNotes)
+    .filter(([_, notes]) => notes.status === "called" || notes.status === "booked")
     .map(([email, notes]) => {
       const lead = leadsData.find(l => l.Email === email);
       return { ...lead, ...notes };
     })
-    .sort((a, b) => b.status === 'booked' ? 1 : -1); // Simple priority for now
+    .reverse();
 
   return (
-    <div className="flex-1 flex flex-col gap-8 p-4 md:p-8 overflow-y-auto h-screen hide-scrollbar">
-      <header className="flex flex-col">
-        <h1 className="text-4xl font-black tracking-tight mb-1 uppercase">
-          Call <span className="text-primary">History</span> Log
-        </h1>
-        <p className="text-gray-500 font-bold text-xs tracking-widest uppercase opacity-70">A complete record of your outreach volume</p>
+    <div className="flex-1 flex flex-col gap-10 p-8 md:p-12 overflow-y-auto hide-scrollbar h-screen">
+      <header className="flex flex-col md:flex-row justify-between items-end md:items-center gap-6">
+        <div className="flex flex-col gap-1">
+          <motion.h1 
+            initial={{ opacity: 0, x: -20 }}
+            animate={{ opacity: 1, x: 0 }}
+            className="text-5xl font-heading font-bold tracking-tight leading-none uppercase"
+          >
+            Call <span className="text-muted-foreground opacity-30 italic">Registry.</span>
+          </motion.h1>
+          <p className="text-muted-foreground font-bold text-[10px] tracking-widest uppercase opacity-40 ml-1">Elite Outreach Interaction Log</p>
+        </div>
+
+        <div className="flex items-center gap-4">
+          <div className="glass-card px-8 py-5 rounded-xl flex items-center gap-4 border border-glass-border">
+            <PhoneOutgoing className="text-foreground opacity-30" size={20} strokeWidth={2.5} />
+            <div className="flex flex-col">
+              <span className="text-[9px] font-bold uppercase tracking-widest opacity-40">Total Logs</span>
+              <span className="text-xs font-bold tracking-widest uppercase">{callLogs.length} INTERACTIONS</span>
+            </div>
+          </div>
+        </div>
       </header>
 
-      <div className="space-y-4">
-        {historyLeads.length > 0 ? (
-          historyLeads.map((lead, idx) => (
-            <motion.div 
+      {/* Extreme Minimal Call Logs */}
+      <div className="flex-1 flex flex-col gap-4 mb-20 max-w-5xl">
+        {callLogs.length > 0 ? (
+          callLogs.map((log, idx) => (
+            <motion.div
               key={idx}
-              initial={{ opacity: 0, x: -20 }}
-              animate={{ opacity: 1, x: 0 }}
+              initial={{ opacity: 0, scale: 0.98 }}
+              animate={{ opacity: 1, scale: 1 }}
               transition={{ delay: idx * 0.05 }}
-              className="glass-card p-6 flex flex-col md:flex-row justify-between items-center gap-6"
+              className="glass-card p-6 flex flex-col md:flex-row items-center gap-8 group border border-glass-border hover:border-black transition-all"
             >
-              <div className="flex items-center gap-6 w-full md:w-auto">
-                <div className={`p-4 rounded-2xl ${lead.status === 'booked' ? 'bg-green-500/20 text-green-500' : 'bg-primary/20 text-primary'} border border-white/10`}>
-                  <PhoneCall size={24} />
+              <div className="w-16 h-16 bg-secondary/50 rounded-xl flex items-center justify-center text-center shrink-0">
+                 <User size={24} className="text-muted-foreground opacity-40" />
+              </div>
+              
+              <div className="flex-1 flex flex-col">
+                <div className="flex items-center gap-3 mb-1">
+                   <h3 className="text-xl font-bold tracking-tight uppercase leading-none">{log["Practice Name"]}</h3>
+                   {log.status === 'booked' && (
+                     <span className="px-3 py-1 bg-green-500 text-white text-[9px] font-black uppercase rounded-full shadow-lg">BOOKED</span>
+                   )}
                 </div>
-                <div className="flex flex-col">
-                  <h3 className="text-lg font-black tracking-tight leading-none mb-1">{lead["Practice Name"]}</h3>
-                  <div className="flex items-center gap-4 text-xs text-gray-500 font-bold">
-                    <span className="flex items-center gap-1"><User size={12} /> {lead["First Name"]}</span>
-                    <span className="flex items-center gap-1"><MapPin size={12} /> {lead.City}</span>
-                    <span className="flex items-center gap-1 px-2 py-0.5 bg-foreground/5 border border-glass-border rounded-full text-[10px] uppercase text-primary tracking-widest">{lead.status}</span>
-                  </div>
+                <div className="flex items-center gap-4 text-[10px] font-bold text-muted-foreground uppercase tracking-widest opacity-60 italic">
+                   <span className="flex items-center gap-1.5"><MapPin size={12} /> {log.City}</span>
+                   <span className="flex items-center gap-1.5 opacity-60"><PhoneOutgoing size={12} /> Outbound Call</span>
                 </div>
               </div>
 
-              <div className="flex-1 flex items-center gap-4 bg-foreground/5 p-4 rounded-xl border border-glass-border w-full">
-                <MessageSquare size={14} className="text-primary shrink-0" />
-                <p className="text-sm font-medium italic opacity-80 leading-relaxed truncate">
-                  {lead.comment || "No specific notes recorded for this call."}
-                </p>
+              <div className="flex-1 max-w-[400px]">
+                 <div className="p-4 bg-secondary/30 rounded-lg border border-dashed border-glass-border">
+                    <p className="text-xs text-muted-foreground font-bold italic line-clamp-2">
+                       "{log.comment || "Direct call logged. No additional notes found for this interaction."}"
+                    </p>
+                 </div>
               </div>
 
-              <div className="flex flex-col items-end gap-1 shrink-0 px-4">
-                 <span className="text-[10px] text-gray-500 font-black uppercase tracking-widest opacity-60">Last Interacted</span>
-                 <span className="text-xs font-black">Just Now</span>
+              <div className="flex items-center gap-3">
+                 <button className="p-4 bg-black text-white dark:bg-white dark:text-black rounded-xl hover:translate-y-[-2px] transition-all active:translate-y-0 shadow-lg">
+                    <Phone size={18} strokeWidth={2.5} />
+                 </button>
+                 <button className="p-4 bg-secondary rounded-xl border border-glass-border hover:border-black transition-all">
+                    <MessageSquare size={18} className="opacity-40" />
+                 </button>
               </div>
             </motion.div>
           ))
         ) : (
-          <div className="flex-1 flex flex-col items-center justify-center text-center p-24 opacity-20 filter grayscale">
-             <History size={64} className="mb-4" />
-             <span className="text-sm font-black uppercase tracking-widest">No calls logged in this session yet</span>
+          <div className="flex-1 flex flex-col items-center justify-center text-center p-20 opacity-20 border-2 border-dashed border-glass-border rounded-3xl">
+             <PhoneCall size={64} strokeWidth={4} className="mb-6" />
+             <span className="text-sm font-bold uppercase tracking-[0.4em] italic leading-none">NO INTERACTIONS LOGGED</span>
           </div>
         )}
       </div>

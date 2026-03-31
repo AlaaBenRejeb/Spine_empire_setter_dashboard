@@ -1,114 +1,133 @@
 "use client";
 
 import { motion } from "framer-motion";
-import { Briefcase, MoreHorizontal, ChevronRight, Filter, Search, Plus } from "lucide-react";
+import { Briefcase, MoreHorizontal, ChevronRight, Filter, Search, Plus, Target, Star, MapPin, Zap } from "lucide-react";
 import { useCRM } from "@/context/CRMContext";
 import leadsData from "@/data/leads.json";
 
 const COLUMNS = [
-  { id: "new", title: "Fresh Leads", color: "bg-primary" },
-  { id: "called", title: "In Progress", color: "bg-yellow-500" },
-  { id: "booked", title: "Demos Booked", color: "bg-green-500" },
-  { id: "ignored", title: "Closed/Archive", color: "bg-red-500" }
+  { id: "new", title: "Market Targets", color: "bg-primary" },
+  { id: "called", title: "Active Pipeline", color: "bg-yellow-500" },
+  { id: "booked", title: "Elite Bookings", color: "bg-green-500" },
+  { id: "ignored", title: "Archived Ops", color: "bg-red-500" }
 ];
 
 export default function DealsPage() {
-  const { leadNotes, updateLeadNote, setActiveLead } = useCRM();
+  const { leadNotes, setActiveLead } = useCRM();
 
   const getLeadsByStatus = (status: string) => {
     return leadsData.filter((lead) => {
       const notes = leadNotes[lead.Email];
       const leadStatus = notes?.status || "new";
       return leadStatus === status;
-    }).slice(0, 50); // Performance limit
+    }).slice(0, 50);
   };
 
   return (
-    <div className="flex-1 flex flex-col gap-8 p-4 md:p-8 overflow-hidden h-screen">
-      <header className="flex justify-between items-center">
-        <div className="flex flex-col">
-          <h1 className="text-4xl font-black tracking-tight mb-1">
-            Visual <span className="text-primary">Pipeline</span>
-          </h1>
-          <p className="text-gray-500 font-bold text-xs tracking-widest uppercase opacity-70">Manage your deals at a glance</p>
+    <div className="flex-1 flex flex-col gap-10 p-8 md:p-12 overflow-hidden h-screen bg-transparent">
+      <header className="flex justify-between items-end">
+        <div className="flex flex-col gap-2">
+          <motion.h1 
+            initial={{ opacity: 0, scale: 0.95 }}
+            animate={{ opacity: 1, scale: 1 }}
+            className="text-6xl font-heading font-black tracking-tighter uppercase leading-none"
+          >
+            Visual <span className="text-gradient">Pipeline.</span>
+          </motion.h1>
+          <p className="text-muted-foreground font-black text-[10px] tracking-[0.5em] uppercase opacity-40 ml-1">Total Market Control Manager</p>
         </div>
 
-        <div className="flex items-center gap-4">
-          <div className="relative group hidden md:block">
-            <Search size={16} className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-500" />
+        <div className="flex items-center gap-6">
+          <div className="relative group hidden xl:block">
+            <Search size={20} className="absolute left-6 top-1/2 -translate-y-1/2 text-muted-foreground group-focus-within:text-primary transition-all" />
             <input 
               type="text" 
-              placeholder="Filter deals..." 
-              className="bg-glass border border-glass-border pl-10 pr-4 py-2 rounded-xl text-xs focus:ring-1 focus:ring-primary outline-none transition-all w-64"
+              placeholder="Search Deals..." 
+              className="bg-secondary/50 border-2 border-glass-border pl-16 pr-8 py-5 rounded-2xl text-xs font-black tracking-widest uppercase focus:border-primary outline-none transition-all w-96 shadow-xl focus:shadow-primary/5"
             />
           </div>
-          <button className="bg-primary text-black font-black text-xs px-5 py-2.5 rounded-xl flex items-center gap-2 hover:brightness-110 active:scale-95 transition-all shadow-lg shadow-primary/20">
-            <Plus size={16} /> New Deal
+          <button className="bg-black text-white dark:bg-primary dark:text-black font-black text-xs px-10 py-5 rounded-2xl flex items-center gap-3 hover:scale-105 active:scale-95 transition-all shadow-2xl uppercase tracking-widest border-2 border-glass-border">
+            <Plus size={20} strokeWidth={3} /> Create Deal
           </button>
         </div>
       </header>
 
-      {/* Kanban Board Container */}
-      <div className="flex-1 overflow-x-auto overflow-y-hidden flex gap-6 pb-4 hide-scrollbar">
-        {COLUMNS.map((col) => (
-          <div key={col.id} className="min-w-[320px] w-full flex flex-col gap-4">
-            <div className="flex justify-between items-center px-2">
-              <div className="flex items-center gap-3">
-                <div className={`w-2 h-2 rounded-full ${col.color} animate-pulse`} />
-                <h3 className="font-black text-xs tracking-widest uppercase opacity-80">{col.title}</h3>
-                <span className="bg-foreground/5 text-[10px] font-bold px-2 py-0.5 rounded-full border border-glass-border">
-                  {getLeadsByStatus(col.id).length}
-                </span>
-              </div>
-              <button className="text-gray-500 hover:text-white transition-colors">
-                <MoreHorizontal size={16} />
-              </button>
-            </div>
-
-            <div className="flex-1 bg-foreground/5 rounded-2xl border border-glass-border p-4 flex flex-col gap-4 overflow-y-auto hide-scrollbar hover:border-primary/20 transition-all">
-              {getLeadsByStatus(col.id).map((lead, idx) => (
-                <motion.div
-                  key={lead.Email}
-                  initial={{ opacity: 0, y: 10 }}
-                  animate={{ opacity: 1, y: 0 }}
-                  transition={{ delay: idx * 0.05 }}
-                  onClick={() => setActiveLead(lead)}
-                  className="glass-card p-5 cursor-pointer hover:border-primary/50 group relative"
-                >
-                  <div className="flex flex-col gap-3">
-                    <div className="flex justify-between items-start">
-                      <span className="text-[10px] text-primary font-black uppercase tracking-tight">{lead.City}</span>
-                      <ChevronRight size={14} className="text-gray-500 group-hover:text-primary transition-colors" />
-                    </div>
-                    <h4 className="font-black text-sm group-hover:text-primary transition-colors leading-tight">
-                      {lead["Practice Name"]}
-                    </h4>
-                    <div className="flex items-center gap-2 text-xs text-gray-500 font-bold">
-                       <Briefcase size={12} className="opacity-50" />
-                       <span>{lead["First Name"]} (Owner)</span>
-                    </div>
-                  </div>
-
-                  {leadNotes[lead.Email]?.comment && (
-                    <div className="mt-3 pt-3 border-t border-glass-border text-[10px] text-gray-400 italic font-medium line-clamp-2">
-                      “{leadNotes[lead.Email].comment}”
-                    </div>
-                  )}
-
-                  {/* Visual Progress Marker */}
-                  <div className={`absolute left-0 top-1/2 -translate-y-1/2 w-1 h-8 rounded-r-full ${col.color}`} />
-                </motion.div>
-              ))}
-              
-              {getLeadsByStatus(col.id).length === 0 && (
-                <div className="flex-1 flex flex-col items-center justify-center text-center p-8 opacity-20 filter grayscale">
-                   <Briefcase size={40} className="mb-3" />
-                   <span className="text-xs font-bold uppercase tracking-widest">No deals in this stage</span>
+      {/* Extreme Kanban Board */}
+      <div className="flex-1 overflow-x-auto overflow-y-hidden flex gap-8 pb-10 hide-scrollbar">
+        {COLUMNS.map((col, colIdx) => {
+          const leads = getLeadsByStatus(col.id);
+          return (
+            <div key={col.id} className="min-w-[380px] w-full flex flex-col gap-6">
+              <div className="flex justify-between items-center px-4">
+                <div className="flex items-center gap-4 group">
+                  <div className={`w-3 h-3 rounded-none ${col.color} animate-pulse border-2 border-black`} />
+                  <h3 className="font-heading font-black text-sm tracking-widest uppercase italic group-hover:text-primary transition-colors">{col.title}</h3>
+                  <span className="bg-black text-white px-3 py-1 text-[10px] font-black italic shadow-lg">
+                    {leads.length}
+                  </span>
                 </div>
-              )}
+                <button className="text-muted-foreground hover:text-foreground transition-colors p-2 bg-secondary/50 rounded-xl">
+                  <MoreHorizontal size={18} />
+                </button>
+              </div>
+
+              <div className="flex-1 bg-secondary/30 rounded-3xl border-2 border-glass-border p-6 flex flex-col gap-6 overflow-y-auto hide-scrollbar group-hover:border-primary/20 transition-all hover:bg-secondary/50 shadow-inner translate-z-0">
+                {leads.map((lead, idx) => {
+                   const reviews = parseInt(lead["Google Reviews"]?.toString() || "0");
+                   return (
+                     <motion.div
+                       key={lead.Email}
+                       initial={{ opacity: 0, scale: 0.9, y: 30 }}
+                       animate={{ opacity: 1, scale: 1, y: 0 }}
+                       transition={{ delay: idx * 0.04 + colIdx * 0.1, duration: 0.6, ease: [0.16, 1, 0.3, 1] }}
+                       onClick={() => setActiveLead(lead)}
+                       className="glass-card p-0 overflow-hidden cursor-pointer group relative hover:z-50"
+                     >
+                       <div className="flex flex-col">
+                         {/* Card Tech Top bar */}
+                         <div className={`h-2.5 w-full ${col.color} opacity-80 group-hover:opacity-100 transition-opacity`} />
+                         
+                         <div className="p-8 flex flex-col gap-5">
+                            <div className="flex justify-between items-start">
+                               <div className="flex flex-col gap-1">
+                                  <span className="text-[10px] text-muted-foreground font-black tracking-widest uppercase opacity-60 flex items-center gap-2">
+                                     <MapPin size={10} /> {lead.City}
+                                  </span>
+                                  <h4 className="font-heading font-black text-lg tracking-tight leading-[1.1] group-hover:text-primary transition-colors uppercase italic pt-2">
+                                    {lead["Practice Name"]}
+                                  </h4>
+                               </div>
+                               <ChevronRight size={20} className="text-muted-foreground group-hover:text-primary group-hover:translate-x-1 transition-all" />
+                            </div>
+
+                            <div className="flex items-center gap-4 pt-4 border-t border-glass-border">
+                               <div className="flex items-center gap-2 px-3 py-1.5 bg-black/[0.03] dark:bg-white/5 border border-glass-border rounded-lg shadow-sm">
+                                  <Zap size={12} className="text-yellow-500" />
+                                  <span className="text-[10px] font-black text-muted-foreground">{reviews} REVIEWS</span>
+                               </div>
+                               {reviews > 150 && (
+                                  <Star size={16} fill="hsl(var(--primary))" className="text-primary animate-float" />
+                               )}
+                               <div className="ml-auto text-[10px] font-black text-muted-foreground opacity-40 uppercase tracking-widest italic group-hover:opacity-100 transition-opacity">
+                                  View Profile
+                               </div>
+                            </div>
+                         </div>
+                       </div>
+                     </motion.div>
+                   );
+                })}
+                
+                {leads.length === 0 && (
+                  <div className="flex-1 flex flex-col items-center justify-center text-center p-12 opacity-10 filter grayscale group-hover:opacity-20 transition-all">
+                     <Target size={64} strokeWidth={4} className="mb-6 animate-pulse" />
+                     <span className="text-sm font-black uppercase tracking-[0.4em] italic">No active frequency detected</span>
+                  </div>
+                )}
+              </div>
             </div>
-          </div>
-        ))}
+          );
+        })}
       </div>
     </div>
   );

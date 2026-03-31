@@ -1,86 +1,122 @@
 @import "tailwindcss";
 
 @theme {
-  --font-sans: var(--font-geist-sans);
-  --font-mono: var(--font-geist-mono);
+  --font-sans: var(--font-inter), ui-sans-serif, system-ui;
+  --font-heading: var(--font-outfit), ui-sans-serif, system-ui;
 }
 
 :root {
-  /* Night Mode (Elite Dark) */
-  --background: #0a0a0a;
-  --foreground: #ededed;
-  --primary: #00d2ff;
-  --primary-glow: rgba(0, 210, 255, 0.3);
-  --glass: rgba(255, 255, 255, 0.05);
-  --glass-border: rgba(255, 255, 255, 0.1);
-  --sidebar-item: rgba(255, 255, 255, 0.05);
-  --card-shadow: 0 8px 32px 0 rgba(0, 0, 0, 0.8);
+  /* Minimal Elite: Night (Deep Obsidian) */
+  --background: 240 10% 2%;
+  --foreground: 0 0% 98%;
+  
+  --primary: 0 0% 100%; /* Pure White primary for Dark Mode */
+  --primary-foreground: 0 0% 0%;
+  
+  --secondary: 240 4% 10%;
+  --secondary-foreground: 0 0% 98%;
+  
+  --muted: 240 4% 12%;
+  --muted-foreground: 240 5% 60%;
+  
+  --accent: 217 91% 60%; /* Soft Blue accent */
+  --accent-foreground: 0 0% 98%;
+  
+  --border: 240 4% 15%;
+  --input: 240 4% 15%;
+  --ring: 0 0% 100%;
+
+  --glass-bg: rgba(255, 255, 255, 0.02);
+  --glass-border: rgba(255, 255, 255, 0.05);
+  --glass-glow: rgba(255, 255, 255, 0.05);
 }
 
 [data-theme="light"] {
-  /* Stark Morning Mode (Elite White) */
-  --background: #ffffff;
-  --foreground: #000000;
-  --primary: #000000; 
-  --primary-glow: rgba(0, 0, 0, 0.05);
-  --glass: #ffffff;
-  --glass-border: #000000;
-  --sidebar-item: #f1f5f9;
-  --card-shadow: none;
+  /* Minimal Elite: Morning (Premium Paper) */
+  --background: 0 0% 98%;
+  --foreground: 0 0% 0%;
+  
+  --primary: 0 0% 0%; /* Pure Black primary */
+  --primary-foreground: 180 100% 100%;
+  
+  --secondary: 0 0% 92%;
+  --secondary-foreground: 0 0% 0%;
+  
+  --muted: 0 0% 90%;
+  --muted-foreground: 0 0% 40%;
+  
+  --accent: 0 0% 0%;
+  --accent-foreground: 0 0% 100%;
+  
+  --border: 0 0% 0%;
+  --input: 0 0% 0%;
+  --ring: 0 0% 0%;
+
+  --glass-bg: #ffffff;
+  --glass-border: rgba(0, 0, 0, 0.1);
+  --glass-glow: rgba(0, 0, 0, 0.02);
 }
 
 body {
-  background: var(--background);
-  color: var(--foreground);
+  background-color: hsl(var(--background));
+  color: hsl(var(--foreground));
   font-family: var(--font-sans);
+  font-feature-settings: "cv02", "cv03", "cv04", "cv11";
   overflow-x: hidden;
-  transition: background 0.2s ease, color 0.2s ease;
+  transition: background-color 0.4s ease, color 0.4s ease;
+  letter-spacing: -0.01em;
 }
 
+h1, h2, h3, h4, h5, h6 {
+  font-family: var(--font-heading);
+  font-weight: 700;
+  letter-spacing: -0.03em;
+}
+
+/* Minimal Elite Component Styling */
 .glass-card {
-  background: var(--glass);
-  backdrop-filter: blur(12px);
+  background-color: var(--glass-bg);
+  backdrop-filter: blur(20px);
   border: 1px solid var(--glass-border);
-  border-radius: 1rem;
-  box-shadow: var(--card-shadow);
-  transition: all 0.2s ease;
+  border-radius: 1.25rem;
+  transition: all 0.3s ease;
+}
+
+[data-theme="dark"] .glass-card:hover {
+  background-color: rgba(255, 255, 255, 0.04);
+  border-color: rgba(255, 255, 255, 0.1);
+  box-shadow: 0 20px 40px rgba(0, 0, 0, 0.4);
 }
 
 [data-theme="light"] .glass-card {
-  border: 2px solid #000000 !important;
-  background: #ffffff !important;
-  border-radius: 0px !important; /* Sharp Elite look for Morning */
-  box-shadow: 6px 6px 0px 0px #000000 !important;
-  backdrop-filter: none !important;
+  border: 1.5px solid #000000;
+  border-radius: 0.75rem;
+  box-shadow: 2px 2px 0px 0px #000000;
+  background-color: #ffffff;
 }
 
-[data-theme="light"] aside {
-  background: #ffffff !important;
-  border-right: 2px solid #000000 !important;
+[data-theme="light"] .glass-card:hover {
+  transform: translate(-1px, -1px);
+  box-shadow: 5px 5px 0px 0px #000000;
 }
 
-[data-theme="light"] input, 
-[data-theme="light"] textarea {
-  background: #ffffff !important;
-  border: 2px solid #000000 !important;
-  color: #000000 !important;
+/* Typography Controls */
+.text-gradient {
+  background: linear-gradient(to right, hsl(var(--foreground)), hsl(var(--foreground) / 0.7));
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
 }
 
-[data-theme="light"] h1, 
-[data-theme="light"] h2, 
-[data-theme="light"] h3, 
-[data-theme="light"] span, 
-[data-theme="light"] p, 
-[data-theme="light"] div {
-  color: #000000 !important;
+/* Elite Scrollbar - Ultra Minimal */
+::-webkit-scrollbar {
+  width: 4px;
 }
-
-.glow-text {
-  text-shadow: 0 0 10px var(--primary-glow);
+::-webkit-scrollbar-track {
+  background: transparent;
 }
-
-[data-theme="light"] .glow-text {
-  text-shadow: none !important;
+::-webkit-scrollbar-thumb {
+  background: hsl(var(--muted));
+  border-radius: 10px;
 }
 
 .hide-scrollbar::-webkit-scrollbar {
@@ -89,4 +125,10 @@ body {
 .hide-scrollbar {
   -ms-overflow-style: none;
   scrollbar-width: none;
+}
+
+/* Layout Container */
+.container-elite {
+  max-width: 1600px;
+  margin: 0 auto;
 }

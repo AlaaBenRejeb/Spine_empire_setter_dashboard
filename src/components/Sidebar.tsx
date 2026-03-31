@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { LayoutDashboard, PhoneCall, Calendar, BarChart3, Settings, LogOut, Briefcase } from "lucide-react";
+import { LayoutDashboard, PhoneCall, Calendar, BarChart3, Settings, LogOut, Briefcase, Zap } from "lucide-react";
 import { motion } from "framer-motion";
 
 export default function Sidebar() {
@@ -17,41 +17,50 @@ export default function Sidebar() {
   ];
 
   return (
-    <aside className="hidden lg:flex w-64 flex-col gap-8 h-screen sticky top-0 p-8 border-r border-glass-border bg-background/50 backdrop-blur-xl">
-      <div className="flex items-center gap-3 px-2">
-        <div className="w-10 h-10 bg-gradient-to-br from-primary to-blue-600 rounded-xl shadow-lg shadow-primary/20 flex items-center justify-center border border-white/10 group hover:border-primary transition-all">
-          <BarChart3 className="text-black group-hover:scale-110 transition-transform" size={24} />
+    <aside className="hidden lg:flex w-72 flex-col gap-10 h-screen sticky top-0 p-10 border-r border-glass-border bg-background transition-all duration-300">
+      <div className="flex items-center gap-4 px-2 cursor-pointer">
+        <div className="w-12 h-12 bg-black text-white dark:bg-white dark:text-black rounded-xl shadow-sm flex items-center justify-center border border-black transition-all">
+          <Zap size={24} strokeWidth={2.5} />
         </div>
-        <span className="text-xl font-black tracking-tighter glow-text uppercase">Spine Empire</span>
+        <div className="flex flex-col">
+          <span className="text-xl font-heading font-bold tracking-tight uppercase leading-none">Spine Empire</span>
+          <span className="text-[10px] font-bold tracking-[0.2em] opacity-40 uppercase">Outreach Elite</span>
+        </div>
       </div>
 
-      <nav className="flex flex-col gap-2 mt-8">
+      <nav className="flex flex-col gap-2 mt-12 flex-1">
         {menuItems.map((item) => {
           const isActive = pathname === item.href;
           return (
             <Link key={item.name} href={item.href}>
               <motion.div
                 whileHover={{ x: 4 }}
-                className={`p-3.5 rounded-xl flex items-center gap-3 font-bold transition-all cursor-pointer ${
+                whileTap={{ scale: 0.98 }}
+                className={`p-4 rounded-xl flex items-center justify-between font-bold transition-all duration-200 group ${
                   isActive 
-                    ? "bg-primary/10 text-primary border border-primary/20" 
-                    : "text-gray-500 hover:bg-sidebar-item hover:text-foreground border border-transparent"
+                    ? "bg-black text-white dark:bg-white dark:text-black shadow-lg" 
+                    : "text-muted-foreground hover:bg-secondary hover:text-foreground"
                 }`}
               >
-                <item.icon size={20} />
-                {item.name}
+                <div className="flex items-center gap-4">
+                  <item.icon size={20} strokeWidth={isActive ? 2.5 : 2} />
+                  <span className="text-xs uppercase tracking-widest font-bold">{item.name}</span>
+                </div>
+                {isActive && (
+                  <div className="w-1.5 h-1.5 rounded-full bg-white dark:bg-black" />
+                )}
               </motion.div>
             </Link>
           );
         })}
       </nav>
 
-      <div className="mt-auto flex flex-col gap-2">
-        <div className="text-gray-500 p-3.5 rounded-xl flex items-center gap-3 font-bold hover:bg-sidebar-item hover:text-foreground transition-all cursor-pointer">
-          <Settings size={20} /> Settings
+      <div className="pt-8 border-t border-glass-border flex flex-col gap-2">
+        <div className="text-muted-foreground p-4 rounded-xl flex items-center gap-4 font-bold uppercase text-[10px] tracking-widest hover:bg-secondary hover:text-foreground transition-all cursor-pointer">
+          <Settings size={18} /> Settings
         </div>
-        <div className="text-gray-500 p-3.5 rounded-xl flex items-center gap-3 font-bold hover:bg-red-500/10 hover:text-red-500 transition-all cursor-pointer">
-          <LogOut size={20} /> Logout
+        <div className="text-muted-foreground p-4 rounded-xl flex items-center gap-4 font-bold uppercase text-[10px] tracking-widest hover:bg-red-500/10 hover:text-red-500 transition-all cursor-pointer">
+          <LogOut size={18} /> Sign Out
         </div>
       </div>
     </aside>
