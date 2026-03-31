@@ -7,14 +7,21 @@ import { useCRM } from "@/context/CRMContext";
 
 export default function LeadList() {
   const [search, setSearch] = useState("");
+  const [statusFilter, setStatusFilter] = useState<"all" | "new" | "called" | "booked">("all");
   const { activeLead, setActiveLead, leadNotes, updateLeadNote, leads } = useCRM();
 
   const filteredLeads = useMemo(() => {
-    return leads.filter(lead => 
-      lead["Practice Name"].toLowerCase().includes(search.toLowerCase()) ||
-      lead.City.toLowerCase().includes(search.toLowerCase())
-    ).slice(0, 50);
-  }, [search, leads]);
+    return leads.filter(lead => {
+      const matchesSearch = lead["Practice Name"].toLowerCase().includes(search.toLowerCase()) ||
+                           lead.City.toLowerCase().includes(search.toLowerCase());
+      
+      if (!matchesSearch) return false;
+      if (statusFilter === "all") return true;
+      
+      const status = leadNotes[lead.Email]?.status || "new";
+      return status === statusFilter;
+    });
+  }, [search, leads, leadNotes, statusFilter]);
 
   return (
     <div className="flex flex-col h-full gap-8">
@@ -30,11 +37,23 @@ export default function LeadList() {
             className="w-full bg-secondary/50 border border-glass-border rounded-xl py-5 pl-14 pr-8 text-xs font-bold tracking-widest uppercase focus:border-foreground outline-none transition-all"
           />
         </div>
-        <div className="flex items-center gap-2">
-          <button className="p-4 bg-background border border-glass-border rounded-xl hover:border-black transition-all active:scale-95"><Filter size={18} /></button>
-          <button className="px-6 py-4 bg-black text-white dark:bg-white dark:text-black font-bold text-[10px] uppercase tracking-widest rounded-xl hover:opacity-90 active:scale-95 transition-all shadow-md">
-             982 Targets
-          </button>
+        <div className="flex items-center gap-2 overflow-x-auto pb-1 no-scrollbar min-w-[300px]">
+          {(['all', 'new', 'called', 'booked'] as const).map((status) => (
+             <button 
+               key={status}
+               onClick={() => setStatusFilter(status)}
+               className={`px-4 py-4 rounded-xl font-bold text-[10px] uppercase tracking-widest transition-all whitespace-nowrap border ${
+                 statusFilter === status 
+                 ? 'bg-black text-white border-black dark:bg-white dark:text-black' 
+                 : 'bg-background border-glass-border text-muted-foreground hover:border-black'
+               }`}
+             >
+               {status}
+             </button>
+          ))}
+          <div className="px-6 py-4 bg-secondary/50 text-muted-foreground font-bold text-[10px] uppercase tracking-widest rounded-xl border border-glass-border whitespace-nowrap">
+             {filteredLeads.length} Targets
+          </div>
         </div>
       </div>
 
