@@ -6,12 +6,25 @@
 }
 
 :root {
+  /* Default (Dark / Night) */
   --background: #0a0a0a;
   --foreground: #ededed;
   --primary: #00d2ff;
   --primary-glow: rgba(0, 210, 255, 0.3);
   --glass: rgba(255, 255, 255, 0.05);
   --glass-border: rgba(255, 255, 255, 0.1);
+  --sidebar-item: rgba(255, 255, 255, 0.05);
+}
+
+[data-theme="light"] {
+  /* Morning (Light) */
+  --background: #f8fafc;
+  --foreground: #0f172a;
+  --primary: #0056b3;
+  --primary-glow: rgba(0, 86, 179, 0.15);
+  --glass: rgba(255, 255, 255, 0.8);
+  --glass-border: rgba(0, 0, 0, 0.1);
+  --sidebar-item: rgba(0, 0, 0, 0.05);
 }
 
 body {
@@ -19,6 +32,7 @@ body {
   color: var(--foreground);
   font-family: var(--font-sans);
   overflow-x: hidden;
+  transition: background 0.5s ease, color 0.5s ease;
 }
 
 .glass-card {

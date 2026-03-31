@@ -11,7 +11,7 @@ interface Task {
   priority: "high" | "med" | "low";
 }
 
-export default function PersonalTasks() {
+export default function PersonalTasks({ theme }: { theme: "dark" | "light" }) {
   const [tasks, setTasks] = useState<Task[]>([]);
   const [input, setInput] = useState("");
 
