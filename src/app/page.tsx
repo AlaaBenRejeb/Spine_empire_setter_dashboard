@@ -9,13 +9,18 @@ import { useCRM } from "@/context/CRMContext";
 
 export default function Dashboard() {
   const { theme, toggleTheme } = useTheme();
-  const { activeLead, setActiveLead } = useCRM();
+  const { activeLead, setActiveLead, leadNotes } = useCRM();
+
+  const notes = Object.values(leadNotes);
+  const totalDials = notes.filter(n => n.status !== "new").length;
+  const totalBooked = notes.filter(n => n.status === "booked").length;
+  const totalLeads = 982;
 
   const stats = [
-    { label: "Total Leads", value: "982", icon: <Target className={`${theme === 'dark' ? 'text-primary' : 'text-blue-600'}`} />, desc: "High Potential Targets" },
-    { label: "Dials Today", value: "24", icon: <PhoneCall className="text-green-500" />, desc: "Daily Goal: 70" },
-    { label: "Demos Booked", value: "3", icon: <Calendar className="text-purple-500" />, desc: "Conversion: 12.5%" },
-    { label: "Pipeline Value", value: "$12k", icon: <TrendingUp className="text-yellow-500" />, desc: "Projected MRR" }
+    { label: "Total Target Pool", value: totalLeads.toString(), icon: <Target className={`${theme === 'dark' ? 'text-primary' : 'text-blue-600'}`} />, desc: "Elite Spine Pool" },
+    { label: "Dials Today", value: totalDials.toString(), icon: <PhoneCall className="text-green-500" />, desc: "Real Volume" },
+    { label: "Booked Demos", value: totalBooked.toString(), icon: <Calendar className="text-purple-500" />, desc: "Win Potential" },
+    { label: "Pipeline Value", value: `$${(totalBooked * 4000).toLocaleString()}`, icon: <TrendingUp className="text-yellow-500" />, desc: "Projected MRR" }
   ];
 
   return (
