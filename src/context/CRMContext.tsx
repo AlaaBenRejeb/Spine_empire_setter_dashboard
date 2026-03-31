@@ -9,6 +9,7 @@ interface CRMContextType {
   setActiveLead: (lead: any) => void;
   leadNotes: Record<string, any>;
   updateLeadNote: (email: string, updates: any) => void;
+  addLead: (lead: any) => Promise<void>;
   loading: boolean;
 }
 
@@ -96,13 +97,13 @@ export function CRMProvider({ children }: { children: React.ReactNode }) {
             synced_at: new Date().toISOString()
           }
         })
-        .eq('business_name', activeLead?.["Practice Name"] || "")
+        .eq('metadata->>email', email)
         .select();
         
       if (error) {
         console.error("❌ Supabase update failed:", error.message);
       } else if (!data || data.length === 0) {
-        console.warn("⚠️ No rows updated. Make sure the lead exists in the database.");
+        console.warn(`⚠️ No rows updated for email: ${email}`);
       } else {
         console.log(`✅ [v0] Synchronized ${email} to ${updates.status}`);
       }
@@ -111,8 +112,44 @@ export function CRMProvider({ children }: { children: React.ReactNode }) {
     }
   };
 
+  const addLead = async (lead: any) => {
+    try {
+      const { data, error } = await supabase
+        .from('leads')
+        .insert([{
+          business_name: lead.business_name,
+          contact_name: lead.contact_name,
+          phone: lead.phone,
+          revenue_range: lead.revenue_range || "Unknown",
+          main_challenge: lead.main_challenge || "",
+          status: 'new',
+          metadata: { 
+            email: lead.email, 
+            city: lead.city, 
+            state: lead.state,
+            google_reviews: "New"
+          }
+        }])
+        .select();
+
+      if (!error && data) {
+        // Update local state so it appears in the list
+        const newLead = data[0];
+        const email = newLead.metadata?.email || newLead.id;
+        setLeadNotes(prev => ({ 
+          ...prev, 
+          [email]: { status: 'new', comment: "" } 
+        }));
+      } else if (error) {
+        console.error("Manual lead insert failed:", error);
+      }
+    } catch (err) {
+      console.error("Unexpected error adding lead:", err);
+    }
+  };
+
   return (
-    <CRMContext.Provider value={{ activeLead, setActiveLead, leadNotes, updateLeadNote, loading }}>
+    <CRMContext.Provider value={{ activeLead, setActiveLead, leadNotes, updateLeadNote, addLead, loading }}>
       {children}
     </CRMContext.Provider>
   );

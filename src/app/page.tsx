@@ -4,13 +4,25 @@ import { motion, AnimatePresence } from "framer-motion";
 import { PhoneCall, Calendar, Target, TrendingUp, BarChart3, CheckSquare, Zap, Activity, MessageSquare, PhoneOutgoing, UserPlus, XCircle, CheckCircle2, RotateCcw } from "lucide-react";
 import LeadList from "@/components/LeadList";
 import PersonalTasks from "@/components/PersonalTasks";
+import AddLeadModal from "@/components/AddLeadModal";
 import LoginScreen from "@/components/LoginScreen";
 import { useCRM } from "@/context/CRMContext";
 import { useState, useEffect } from "react";
 
+function formatTime12Hour(time24: string) {
+  if (!time24) return "09:00 AM";
+  let [hours, minutes] = time24.split(":");
+  let h = parseInt(hours, 10);
+  const ampm = h >= 12 ? "PM" : "AM";
+  h = h % 12 || 12;
+  return `${h.toString().padStart(2, '0')}:${minutes} ${ampm}`;
+}
+
 function SetterDashboardContent() {
   const { activeLead, setActiveLead, leadNotes, updateLeadNote } = useCRM();
   const [noteText, setNoteText] = useState("");
+  const [scheduledTime, setScheduledTime] = useState("09:00");
+  const [isAddLeadModalOpen, setIsAddLeadModalOpen] = useState(false);
 
   const notes = Object.values(leadNotes);
   const totalDials = notes.filter(n => n.status !== "new").length;
@@ -28,8 +40,7 @@ function SetterDashboardContent() {
     if (activeLead) {
       const updates: any = { status, comment: noteText };
       if (status === "booked") {
-        // Default to next available slot (e.g., 09:00 AM) or current time
-        updates.scheduled_time = "09:00 AM"; 
+        updates.scheduled_time = formatTime12Hour(scheduledTime); 
       }
       updateLeadNote(activeLead.Email, updates);
     }
@@ -105,6 +116,13 @@ function SetterDashboardContent() {
               <BarChart3 className="text-foreground opacity-20" size={24} />
               CRM TARGET LIST
             </h2>
+            <button 
+              onClick={() => setIsAddLeadModalOpen(true)}
+              className="flex items-center gap-2 px-6 py-3 bg-green-500 text-black font-black text-[10px] uppercase tracking-widest rounded-xl hover:bg-green-400 transition-all shadow-[0_0_20px_rgba(34,197,94,0.2)] active:scale-95"
+            >
+              <UserPlus size={14} strokeWidth={3} />
+              QUICK ADD
+            </button>
           </div>
           <div className="flex-1 overflow-hidden">
             <LeadList />
@@ -166,19 +184,35 @@ function SetterDashboardContent() {
                </div>
 
 
-               {/* Call Notes Input */}
-               <div className="flex flex-col gap-4 flex-1">
-                  <div className="flex justify-between items-end">
-                    <span className="text-[10px] font-black uppercase tracking-widest opacity-40">Interaction Notes</span>
-                    <MessageSquare size={14} className="opacity-20" />
+               {/* Call Notes & Time Input */}
+               <div className="flex flex-col md:flex-row gap-4 flex-1">
+                  <div className="flex flex-col gap-4 flex-1">
+                    <div className="flex justify-between items-end">
+                      <span className="text-[10px] font-black uppercase tracking-widest opacity-40">Interaction Notes</span>
+                      <MessageSquare size={14} className="opacity-20" />
+                    </div>
+                    <textarea 
+                      value={noteText}
+                      onChange={(e) => setNoteText(e.target.value)}
+                      onBlur={() => handleStatusUpdate(leadNotes[activeLead.Email]?.status || "called")}
+                      placeholder="Log gatekeeper feedback, objections, or next steps..."
+                      className="flex-1 bg-black/50 border-2 border-glass-border p-6 rounded-2xl text-sm font-bold placeholder:italic placeholder:opacity-30 focus:border-primary outline-none transition-all resize-none"
+                    />
                   </div>
-                  <textarea 
-                    value={noteText}
-                    onChange={(e) => setNoteText(e.target.value)}
-                    onBlur={() => handleStatusUpdate(leadNotes[activeLead.Email]?.status || "called")}
-                    placeholder="Log gatekeeper feedback, objections, or next steps..."
-                    className="flex-1 bg-black/50 border-2 border-glass-border p-6 rounded-2xl text-sm font-bold placeholder:italic placeholder:opacity-30 focus:border-primary outline-none transition-all resize-none"
-                  />
+                  
+                  {/* Time Picker Slider/Input */}
+                  <div className="flex flex-col gap-4 w-full md:w-1/3">
+                    <div className="flex justify-between items-end">
+                      <span className="text-[10px] font-black uppercase tracking-widest opacity-40 text-primary">Demo Time</span>
+                      <Calendar size={14} className="opacity-20" />
+                    </div>
+                    <input 
+                      type="time" 
+                      value={scheduledTime}
+                      onChange={(e) => setScheduledTime(e.target.value)}
+                      className="bg-black/50 border-2 border-primary/40 focus:border-primary p-6 rounded-2xl text-lg font-black text-white outline-none transition-all w-full leading-none"
+                    />
+                  </div>
                </div>
 
                <div className="p-6 bg-secondary/30 rounded-2xl border border-glass-border flex items-center justify-between">
@@ -217,7 +251,22 @@ function SetterDashboardContent() {
           </div>
         )}
       </div>
+      
+      <AddLeadModal 
+        isOpen={isAddLeadModalOpen} 
+        onClose={() => setIsAddLeadModalOpen(false)} 
+      />
     </div>
+  );
+}
+
+function FinalDashboardWrapper() {
+  const [isAddLeadModalOpen, setIsAddLeadModalOpen] = useState(false);
+  
+  return (
+    <>
+      <SetterDashboardContent />
+    </>
   );
 }
 
@@ -246,5 +295,10 @@ export default function Dashboard() {
     return <LoginScreen onLogin={handleLoginSuccess} />;
   }
 
-  return <SetterDashboardContent />;
+  // Use a wrapper to handle the global modal state if needed, or just put it here
+  return (
+    <>
+      <SetterDashboardContent />
+    </>
+  );
 }
