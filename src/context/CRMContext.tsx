@@ -85,7 +85,7 @@ export function CRMProvider({ children }: { children: React.ReactNode }) {
 
     // Sync to Supabase
     try {
-      await supabase
+      const { data, error } = await supabase
         .from('leads')
         .update({ 
           status: updates.status,
@@ -96,11 +96,18 @@ export function CRMProvider({ children }: { children: React.ReactNode }) {
             synced_at: new Date().toISOString()
           }
         })
-        .or(`metadata->>email.eq.${email},business_name.eq.${activeLead?.['Practice Name']}`);
+        .eq('business_name', activeLead?.["Practice Name"] || "")
+        .select();
         
-      console.log(`[v0] Synchronized ${email} to ${updates.status}`);
+      if (error) {
+        console.error("❌ Supabase update failed:", error.message);
+      } else if (!data || data.length === 0) {
+        console.warn("⚠️ No rows updated. Make sure the lead exists in the database.");
+      } else {
+        console.log(`✅ [v0] Synchronized ${email} to ${updates.status}`);
+      }
     } catch (err) {
-      console.error("Supabase update failed:", err);
+      console.error("❌ Unexpected error during sync:", err);
     }
   };
 
