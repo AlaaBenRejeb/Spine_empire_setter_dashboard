@@ -1,9 +1,11 @@
 "use client";
 
 import { motion } from "framer-motion";
-import { Briefcase, MoreHorizontal, ChevronRight, Filter, Search, Plus, Target, Star, MapPin, Zap, User } from "lucide-react";
+import { Briefcase, MoreHorizontal, ChevronRight, Filter, Search, Plus, Target, Star, MapPin, Zap, User, Mail, MessageSquare, DollarSign } from "lucide-react";
 import { useCRM } from "@/context/CRMContext";
 import leadsData from "@/data/leads.json";
+import FollowUpModal from "@/components/FollowUpModal";
+import { useState } from "react";
 
 const COLUMNS = [
   { id: "new", title: "Market Targets", color: "bg-primary" },
@@ -14,6 +16,9 @@ const COLUMNS = [
 
 export default function DealsPage() {
   const { leadNotes, setActiveLead } = useCRM();
+  const [selectedLead, setSelectedLead] = useState<any>(null);
+  const [isFollowUpOpen, setIsFollowUpOpen] = useState(false);
+  const [followUpTab, setFollowUpTab] = useState<"email" | "sms">("email");
 
   const getLeadsByStatus = (status: string) => {
     return leadsData.filter((lead) => {
@@ -100,18 +105,42 @@ export default function DealsPage() {
                                <ChevronRight size={20} className="text-muted-foreground group-hover:text-primary group-hover:translate-x-1 transition-all" />
                             </div>
 
-                            <div className="flex items-center gap-4 pt-4 border-t border-glass-border">
-                               <div className="flex items-center gap-2 px-3 py-1.5 bg-black/[0.03] dark:bg-white/5 border border-glass-border rounded-lg shadow-sm truncate max-w-[160px]">
-                                  <User size={12} className="text-primary shrink-0" />
-                                  <span className="text-[10px] font-black text-muted-foreground truncate">{lead["First Name"] || "Owner"}</span>
-                               </div>
-                               {reviews > 150 && (
-                                  <Star size={16} fill="hsl(var(--primary))" className="text-primary animate-float" />
-                               )}
-                               <div className="ml-auto text-[10px] font-black text-muted-foreground opacity-40 uppercase tracking-widest italic group-hover:opacity-100 transition-opacity">
-                                  View Profile
-                               </div>
-                            </div>
+                             <div className="flex items-center gap-4 pt-4 border-t border-glass-border">
+                                <div className="flex items-center gap-2 px-3 py-1.5 bg-black/[0.03] dark:bg-white/5 border border-glass-border rounded-lg shadow-sm truncate max-w-[130px]">
+                                   <User size={12} className="text-primary shrink-0" />
+                                   <span className="text-[10px] font-black text-muted-foreground truncate">{lead["First Name"] || "Owner"}</span>
+                                </div>
+                                <div className="flex items-center gap-1.5 px-3 py-1.5 bg-primary/10 border border-primary/20 rounded-lg shadow-sm">
+                                   <DollarSign size={12} className="text-primary" />
+                                   <span className="text-[10px] font-black text-primary">$4,000</span>
+                                </div>
+                                <div className="ml-auto flex items-center gap-2">
+                                   <button 
+                                      onClick={(e) => {
+                                         e.stopPropagation();
+                                         setSelectedLead(lead);
+                                         setFollowUpTab("email");
+                                         setIsFollowUpOpen(true);
+                                      }}
+                                      className="p-2.5 bg-indigo-600 text-white rounded-xl hover:bg-indigo-700 transition-all shadow-lg hover:scale-110 active:scale-95"
+                                      title="Email Script"
+                                   >
+                                      <Mail size={14} strokeWidth={3} />
+                                   </button>
+                                   <button 
+                                      onClick={(e) => {
+                                         e.stopPropagation();
+                                         setSelectedLead(lead);
+                                         setFollowUpTab("sms");
+                                         setIsFollowUpOpen(true);
+                                      }}
+                                      className="p-2.5 bg-emerald-600 text-white rounded-xl hover:bg-emerald-700 transition-all shadow-lg hover:scale-110 active:scale-95"
+                                      title="SMS Script"
+                                   >
+                                      <MessageSquare size={14} strokeWidth={3} />
+                                   </button>
+                                </div>
+                             </div>
                          </div>
                        </div>
                      </motion.div>
@@ -129,6 +158,18 @@ export default function DealsPage() {
           );
         })}
       </div>
+      <FollowUpModal 
+        isOpen={isFollowUpOpen}
+        onClose={() => setIsFollowUpOpen(false)}
+        lead={selectedLead ? {
+          Email: selectedLead.Email,
+          "First Name": selectedLead["First Name"],
+          "Practice Name": selectedLead["Practice Name"],
+          Phone: selectedLead.Phone || "",
+          City: selectedLead.City || ""
+        } : null}
+        defaultTab={followUpTab}
+      />
     </div>
   );
 }

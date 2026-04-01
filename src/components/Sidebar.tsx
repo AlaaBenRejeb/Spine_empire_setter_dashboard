@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { LayoutDashboard, PhoneCall, Calendar, BarChart3, Settings, LogOut, Briefcase, Zap } from "lucide-react";
+import { LayoutDashboard, PhoneCall, Calendar, BarChart3, Settings, LogOut, Briefcase, Zap, Presentation } from "lucide-react";
 import { motion } from "framer-motion";
 
 export default function Sidebar() {
@@ -11,6 +11,7 @@ export default function Sidebar() {
   const menuItems = [
     { name: "Dashboard", href: "/", icon: LayoutDashboard },
     { name: "Deals Pipeline", href: "/deals", icon: Briefcase },
+    { name: "Onboarding", href: "/onboarding", icon: Presentation },
     { name: "My Calls", href: "/calls", icon: PhoneCall },
     { name: "Performance", href: "/performance", icon: BarChart3 },
     { name: "Bookings", href: "/bookings", icon: Calendar },
