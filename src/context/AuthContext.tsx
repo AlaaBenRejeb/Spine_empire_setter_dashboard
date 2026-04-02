@@ -32,7 +32,7 @@ export function AuthProvider({
   const [supabase] = useState(() => createClient());
 
   const [user, setUser] = useState<any>(null);
-  const [profile, setProfile] = useState<any>(null);
+  const [profile, setProfile] = useState<any>(undefined);
   const [loading, setLoading] = useState(true);
 
   const checkPortalAccess = (userProfile: any) => {
@@ -72,10 +72,8 @@ export function AuthProvider({
   useEffect(() => {
     // Fail-safe: Force resolve loading after 5 seconds to prevent infinite "Syncing" hang
     const loadingTimeout = setTimeout(() => {
-      if (loading) {
-        console.warn("Auth synchronization timeout: Forcing interface load.");
-        setLoading(false);
-      }
+      setLoading(false);
+      console.warn("Auth synchronization timeout: Forcing interface load.");
     }, 5000);
 
     const initAuth = async () => {
@@ -96,6 +94,8 @@ export function AuthProvider({
             console.log("No profile detected - triggering onboarding.");
             setProfile(null);
           }
+        } else {
+          setLoading(false); // No session
         }
       } catch (error: any) {
         console.error("Critical Auth Sync Failure:", error);
@@ -148,8 +148,8 @@ export function AuthProvider({
   // Hierarchy Check
   const isSuperadmin = user?.email === 'alaabenrejeb.b@icloud.com';
 
-  // Determine if onboarding is needed (Removed practice_name check)
-  const needsOnboarding = user && (!profile || !profile.first_name || !profile.last_name || !profile.city);
+  // Determine if onboarding is needed (More robust check)
+  const needsOnboarding = user && profile !== undefined && (profile === null || !profile.first_name || !profile.last_name || !profile.city);
 
   if (loading) {
     return (
