@@ -3,13 +3,10 @@
 import { motion } from "framer-motion";
 import { Zap, Shield, ChevronRight, User, Target, Crosshair, Trophy, Building2, MapPin, CheckCircle2, UserCircle } from "lucide-react";
 import { useState } from "react";
-import { createBrowserClient } from "@supabase/ssr";
+import { createClient } from "@/lib/supabase/client";
 
 export default function OnboardingPage({ user, onComplete }: { user: any, onComplete: () => void }) {
-  const [supabase] = useState(() => createBrowserClient(
-    process.env.NEXT_PUBLIC_SUPABASE_URL!,
-    process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
-  ));
+  const [supabase] = useState(() => createClient());
 
   const [step, setStep] = useState(1);
   const [firstName, setFirstName] = useState("");
