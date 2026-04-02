@@ -70,6 +70,14 @@ export function AuthProvider({
   };
 
   useEffect(() => {
+    // Fail-safe: Force resolve loading after 5 seconds to prevent infinite "Syncing" hang
+    const loadingTimeout = setTimeout(() => {
+      if (loading) {
+        console.warn("Auth synchronization timeout: Forcing interface load.");
+        setLoading(false);
+      }
+    }, 5000);
+
     const initAuth = async () => {
       try {
         const { data: { session } } = await supabase.auth.getSession();
@@ -79,7 +87,7 @@ export function AuthProvider({
             .from('profiles')
             .select('*')
             .eq('id', session.user.id)
-            .single();
+            .maybeSingle();
           
           if (profileData) {
             setProfile(profileData);
@@ -93,6 +101,7 @@ export function AuthProvider({
         console.error("Critical Auth Sync Failure:", error);
       } finally {
         setLoading(false);
+        clearTimeout(loadingTimeout);
       }
     };
 
@@ -106,7 +115,7 @@ export function AuthProvider({
             .from('profiles')
             .select('*')
             .eq('id', session.user.id)
-            .single();
+            .maybeSingle();
           
           if (profileData) {
             setProfile(profileData);
@@ -122,10 +131,14 @@ export function AuthProvider({
         console.error("Auth state update error:", error);
       } finally {
         setLoading(false);
+        clearTimeout(loadingTimeout);
       }
     });
 
-    return () => subscription.unsubscribe();
+    return () => {
+      subscription.unsubscribe();
+      clearTimeout(loadingTimeout);
+    };
   }, []);
 
   const signOut = async () => {
