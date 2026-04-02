@@ -64,10 +64,10 @@ export function CRMProvider({ children }: { children: React.ReactNode }) {
       try {
         let query = supabase.from('leads').select('*');
         
-        // If setter, only show their own leads
-        if (session?.user && (!userRole || userRole === 'setter')) {
-          query = query.eq('setter_id', session.user.id);
-        }
+        // Removed setter_id filter to allow global lead visibility for Setters
+        // if (session?.user && (!userRole || userRole === 'setter')) {
+        //   query = query.eq('setter_id', session.user.id);
+        // }
 
         const { data: dbLeads, error } = await query;
 

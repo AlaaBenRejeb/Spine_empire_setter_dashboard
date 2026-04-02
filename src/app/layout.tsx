@@ -31,6 +31,8 @@ function AppLayout({ children }: { children: React.ReactNode }) {
   );
 }
 
+import { AuthProvider } from "@/context/AuthContext";
+
 export default function RootLayout({
   children,
 }: Readonly<{
@@ -43,9 +45,11 @@ export default function RootLayout({
       </head>
       <body>
         <ThemeProvider>
-          <CRMProvider>
-            <AppLayout>{children}</AppLayout>
-          </CRMProvider>
+          <AuthProvider portalType="setter">
+            <CRMProvider>
+              <AppLayout>{children}</AppLayout>
+            </CRMProvider>
+          </AuthProvider>
         </ThemeProvider>
       </body>
     </html>

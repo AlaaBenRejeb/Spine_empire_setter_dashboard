@@ -4,9 +4,11 @@ import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { LayoutDashboard, PhoneCall, Calendar, BarChart3, Settings, LogOut, Briefcase, Zap, Presentation } from "lucide-react";
 import { motion } from "framer-motion";
+import { useAuth } from "@/context/AuthContext";
 
 export default function Sidebar() {
   const pathname = usePathname();
+  const { profile, signOut } = useAuth();
 
   const menuItems = [
     { name: "Dashboard", href: "/", icon: LayoutDashboard },
@@ -25,7 +27,7 @@ export default function Sidebar() {
         </div>
         <div className="flex flex-col">
           <span className="text-xl font-heading font-bold tracking-tight uppercase leading-none">Spine Empire</span>
-          <span className="text-[10px] font-bold tracking-[0.2em] opacity-40 uppercase">Setter Spine Empire</span>
+          <span className="text-[10px] font-bold tracking-[0.2em] opacity-40 uppercase">Setter {profile?.first_name || 'Node'}</span>
         </div>
       </div>
 
@@ -57,11 +59,11 @@ export default function Sidebar() {
       </nav>
 
       <div className="pt-8 border-t border-glass-border flex flex-col gap-2">
-        <div className="text-muted-foreground p-4 rounded-xl flex items-center gap-4 font-bold uppercase text-[10px] tracking-widest hover:bg-secondary hover:text-foreground transition-all cursor-pointer">
+        <Link href="/settings" className="text-muted-foreground p-4 rounded-xl flex items-center gap-4 font-bold uppercase text-[10px] tracking-widest hover:bg-secondary hover:text-foreground transition-all cursor-pointer">
           <Settings size={18} /> Settings
-        </div>
-        <div className="text-muted-foreground p-4 rounded-xl flex items-center gap-4 font-bold uppercase text-[10px] tracking-widest hover:bg-red-500/10 hover:text-red-500 transition-all cursor-pointer">
-          <LogOut size={18} /> Sign Out
+        </Link>
+        <div onClick={signOut} className="text-muted-foreground p-4 rounded-xl flex items-center gap-4 font-bold uppercase text-[10px] tracking-widest hover:bg-red-500/10 hover:text-red-500 transition-all cursor-pointer">
+          <LogOut size={18} /> Exit
         </div>
       </div>
     </aside>

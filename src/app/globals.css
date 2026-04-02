@@ -6,7 +6,7 @@
 }
 
 :root {
-  /* Obsidian Elite: Permanent Theme for Spine Empire Setter Intelligence */
+  /* Obsidian Elite: Permanent Theme for Spine Empire Sales Intelligence */
   --background: 240 10% 2%;
   --foreground: 0 0% 98%;
   
@@ -71,6 +71,17 @@
     background: linear-gradient(to right, hsl(var(--foreground)), hsl(var(--foreground) / 0.7));
     -webkit-background-clip: text;
     -webkit-text-fill-color: transparent;
+  }
+
+  /* Intelligence System Pulsars */
+  .pulsar-emerald {
+    @apply w-2 h-2 rounded-full bg-emerald-500 shadow-[0_0_10px_#10b981];
+    animation: pulsar 2s infinite ease-in-out;
+  }
+
+  @keyframes pulsar {
+    0%, 100% { transform: scale(1); opacity: 1; }
+    50% { transform: scale(1.2); opacity: 0.7; }
   }
 }
 
