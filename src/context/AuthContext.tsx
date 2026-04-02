@@ -56,8 +56,6 @@ export function AuthProvider({
 
     if (!isAuthorized) {
       console.warn("Hierarchy Breach: Redirecting to authorized portal...");
-      const targetPortal = role === 'admin' || role === 'superadmin' ? 'admin' : role;
-      const targetUrl = PORTAL_MAP[targetPortal] || PORTAL_MAP['setter'];
       
       // Strategic Hierarchy Redirection (Enforced in ALL environments)
       const targetPortal = role === 'admin' || role === 'superadmin' ? 'admin' : role;
