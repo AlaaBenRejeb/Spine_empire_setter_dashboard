@@ -35,11 +35,14 @@ export function AuthProvider({
   const [profile, setProfile] = useState<any>(undefined);
   const [loading, setLoading] = useState(true);
 
-  // Absolute master bypass for owner
-  const isSuperadmin = user?.email === 'alaabenrejeb.b@icloud.com';
+  // Absolute master bypass for owner (Case-insensitive + Database Role)
+  const isSuperadmin = 
+    user?.email?.toLowerCase() === 'alaabenrejeb.b@icloud.com' || 
+    profile?.role === 'superadmin';
 
   const checkPortalAccess = (userProfile: any) => {
-    if (isSuperadmin) return; // Immediate bypass for master account
+    // If they are superadmin, they have absolute authority to enter any portal
+    if (isSuperadmin) return;
     if (!userProfile) return;
 
     // Safety: If they are on localhost, skip automated redirects for development ease
@@ -142,7 +145,7 @@ export function AuthProvider({
       subscription.unsubscribe();
       clearTimeout(loadingTimeout);
     };
-  }, [user?.email]); // Re-run if email becomes available
+  }, [supabase.auth]);
 
   // Temporary Promotion Logic for requested email
   const promotionAttempted = React.useRef(false);
@@ -166,7 +169,7 @@ export function AuthProvider({
       }
     };
     promoteToSuperadmin();
-  }, [user, profile, isSuperadmin]);
+  }, [user, profile, isSuperadmin, supabase]);
 
   const signOut = async () => {
     await supabase.auth.signOut();
@@ -190,7 +193,12 @@ export function AuthProvider({
     return <UnifiedLogin />;
   }
 
-  if (needsOnboarding) {
+  // Redirect superadmin away from onboarding
+  if (isSuperadmin && needsOnboarding) {
+    console.log("Superadmin detected - skipping onboarding.");
+  }
+
+  if (needsOnboarding && !isSuperadmin) {
     return <OnboardingPage user={user} onComplete={() => window.location.reload()} />;
   }
 

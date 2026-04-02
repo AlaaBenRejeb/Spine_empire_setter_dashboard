@@ -30,8 +30,8 @@ export default function DealsPage() {
   };
 
   return (
-    <div className="flex-1 flex flex-col gap-10 p-8 md:p-12 overflow-hidden h-screen bg-transparent">
-      <header className="flex justify-between items-end">
+    <div className="flex-1 flex flex-col overflow-hidden h-screen bg-transparent">
+      <header className="flex justify-between items-end p-8 md:p-12 pb-2 shrink-0">
         <div className="flex flex-col gap-2">
           <motion.h1 
             initial={{ opacity: 0, scale: 0.95 }}
@@ -59,7 +59,7 @@ export default function DealsPage() {
       </header>
 
       {/* Extreme Kanban Board */}
-      <div className="flex-1 overflow-x-auto overflow-y-hidden flex gap-8 pb-10 scroll-smooth snap-x custom-scrollbar">
+      <div className="flex-1 overflow-x-auto overflow-y-hidden flex gap-8 p-8 md:p-12 pt-4 pb-16 scroll-smooth snap-x custom-scrollbar">
         {COLUMNS.map((col, colIdx) => {
           const leads = getLeadsByStatus(col.id);
           return (

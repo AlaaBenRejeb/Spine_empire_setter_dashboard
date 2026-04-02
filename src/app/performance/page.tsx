@@ -6,26 +6,27 @@ import { useCRM } from "@/context/CRMContext";
 import leadsData from "@/data/leads.json";
 
 export default function PerformancePage() {
-  const { leadNotes } = useCRM();
+  const { leads, leadNotes } = useCRM();
 
-  const stats = Object.values(leadNotes);
-  const totalDials = stats.filter(s => s.status !== "new").length;
-  const totalBooked = stats.filter(s => s.status === "booked").length;
-  const totalIgnored = stats.filter(s => s.status === "ignored").length;
-  const totalLeads = leadsData.length;
+  const notes = Object.values(leadNotes);
+  const totalDials = notes.filter(s => s.status !== "new").length;
+  const totalBooked = notes.filter(s => s.status === "booked").length;
+  const totalIgnored = notes.filter(s => s.status === "ignored" || s.status === "archived").length;
+  const totalLeads = leads.length;
 
   const conversionRate = totalDials > 0 ? ((totalBooked / totalDials) * 100).toFixed(1) : "0.0";
+  const dealValue = 7500;
 
   const metrics = [
-    { label: "Elite Target Pool", value: totalLeads.toString(), icon: <Target className="text-primary" />, desc: "Adjusted for review density", trend: "+100%" },
-    { label: "Outreach Volume", value: totalDials.toString(), icon: <PhoneCall className="text-yellow-500" />, desc: "High-frequency dials", trend: "+24 today" },
-    { label: "Qualified Demos", value: totalBooked.toString(), icon: <Calendar className="text-green-500" />, desc: "Total Booked Demos", trend: "Elite Win" },
-    { label: "CRM Win Rate", value: `${conversionRate}%`, icon: <TrendingUp className="text-purple-500" />, desc: "Optimization Frequency", trend: "Top Tier" }
+    { label: "Elite Target Pool", value: totalLeads.toLocaleString(), icon: <Target className="text-primary" />, desc: "Total database nodes", trend: "Live" },
+    { label: "Outreach Volume", value: totalDials.toLocaleString(), icon: <PhoneCall className="text-yellow-500" />, desc: "High-frequency dials", trend: "Active" },
+    { label: "Qualified Demos", value: totalBooked.toLocaleString(), icon: <Calendar className="text-green-500" />, desc: "Total Booked Demos", trend: "Success" },
+    { label: "CRM Win Rate", value: `${conversionRate}%`, icon: <TrendingUp className="text-purple-500" />, desc: "Direct conversion frequency", trend: "Elite" }
   ];
 
   const distribution = [
-    { label: "Market Fresh", count: totalLeads - totalDials, color: "bg-primary" },
-    { label: "Active Pulse", count: totalDials - totalBooked - totalIgnored, color: "bg-yellow-500" },
+    { label: "Market Fresh", count: Math.max(0, totalLeads - totalDials), color: "bg-primary" },
+    { label: "Active Pulse", count: Math.max(0, totalDials - totalBooked - totalIgnored), color: "bg-yellow-500" },
     { label: "Elite Booked", count: totalBooked, color: "bg-green-500" },
     { label: "Market Archive", count: totalIgnored, color: "bg-red-500" }
   ];
@@ -129,7 +130,7 @@ export default function PerformancePage() {
                  <div className="flex flex-col">
                     <span className="text-[10px] text-muted-foreground font-black uppercase tracking-[0.3em] mb-2">Pipeline Opportunity</span>
                     <span className="text-4xl font-heading font-black italic tracking-tighter group-hover:text-green-500 transition-colors">
-                       ${(totalBooked * 4000).toLocaleString()} VALUATION
+                       ${(totalBooked * dealValue).toLocaleString()} VALUATION
                     </span>
                  </div>
                  <div className="bg-green-500/20 p-5 rounded-2xl border-2 border-green-500/20 shadow-xl group-hover:bg-green-500 group-hover:text-black transition-all">

@@ -20,7 +20,7 @@ export default function Sidebar() {
   ];
 
   return (
-    <aside className="hidden lg:flex w-64 flex-col gap-6 h-screen sticky top-0 p-6 border-r border-glass-border bg-background transition-all duration-300 overflow-hidden">
+    <aside className="hidden lg:flex w-64 flex-shrink-0 flex-col gap-6 h-screen sticky top-0 p-6 border-r border-glass-border bg-background transition-all duration-300 overflow-hidden shadow-2xl z-40">
       <div className="flex items-center gap-3 px-1 cursor-pointer">
         <div className="w-10 h-10 bg-black text-white dark:bg-white dark:text-black rounded-lg shadow-sm flex items-center justify-center border border-black transition-all">
           <Zap size={20} strokeWidth={2.5} />

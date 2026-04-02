@@ -2,16 +2,13 @@
 
 import { useState } from "react";
 import { useAuth } from "@/context/AuthContext";
-import { createBrowserClient } from "@supabase/ssr";
+import { createClient } from "@/lib/supabase/client";
 import { motion } from "framer-motion";
 import { User, Mail, Lock, MapPin, Save, Shield, ArrowLeft, CheckCircle2, AlertCircle } from "lucide-react";
 
 export default function SettingsPage() {
   const { user, profile, signOut } = useAuth();
-  const [supabase] = useState(() => createBrowserClient(
-    process.env.NEXT_PUBLIC_SUPABASE_URL!,
-    process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
-  ));
+  const [supabase] = useState(() => createClient());
 
   const [firstName, setFirstName] = useState(profile?.first_name || "");
   const [lastName, setLastName] = useState(profile?.last_name || "");
