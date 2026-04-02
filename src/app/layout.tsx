@@ -20,6 +20,14 @@ const outfit = Outfit({
 function AppLayout({ children }: { children: React.ReactNode }) {
   const { activeLead } = useCRM();
   
+  // Hide dashboard layout on auth/join pages
+  const isAuthPage = typeof window !== 'undefined' && (
+      window.location.pathname.startsWith('/join') || 
+      window.location.pathname.startsWith('/auth/signup')
+  );
+
+  if (isAuthPage) return <>{children}</>;
+
   return (
     <div className="flex">
       <Sidebar />

@@ -25,6 +25,7 @@ export function CRMProvider({ children }: { children: React.ReactNode }) {
   const [loading, setLoading] = useState(true);
   const [user, setUser] = useState<any>(null);
   const [userRole, setUserRole] = useState<string | null>(null);
+  const [assignedCloserId, setAssignedCloserId] = useState<string | null>(null);
 
   const transformLead = (lead: any) => ({
     "Practice Name": lead.business_name,
@@ -46,14 +47,26 @@ export function CRMProvider({ children }: { children: React.ReactNode }) {
       
       // 0. Get Auth Session & Role
       const { data: { session } } = await supabase.auth.getSession();
+      let currentUser = null;
       if (session?.user) {
         setUser(session.user);
+        currentUser = session.user;
         const { data: profile } = await supabase
           .from('profiles')
           .select('role')
           .eq('id', session.user.id)
           .single();
         setUserRole(profile?.role || 'setter');
+      }
+
+      // 0.1 Fetch Assigned Closer (Pairing Matrix #1)
+      if (currentUser) {
+        const { data: mapping } = await supabase
+          .from('setter_closer_mapping')
+          .select('closer_id')
+          .eq('setter_id', currentUser.id)
+          .single();
+        if (mapping?.closer_id) setAssignedCloserId(mapping.closer_id);
       }
 
       // 1. Load local notes for immediate UI responsiveness
@@ -75,6 +88,7 @@ export function CRMProvider({ children }: { children: React.ReactNode }) {
           // Merge DB statuses into local notes
           const syncedNotes: Record<string, any> = {};
           const syncedLeads: any[] = dbLeads.map(lead => ({
+            id: lead.id,
             "Practice Name": lead.business_name,
             "First Name": lead.contact_name?.split(' ')[0] || "Owner",
             "Last Name": lead.contact_name?.split(' ').slice(1).join(' ') || "",
@@ -85,15 +99,16 @@ export function CRMProvider({ children }: { children: React.ReactNode }) {
             Email: lead.metadata?.email || lead.id,
             "Revenue Range": lead.revenue_range || "Unknown",
             "Main Challenge": lead.main_challenge || "",
-            DealValue: lead.metadata?.deal_value || 4000,
+            DealValue: lead.metadata?.deal_value || 7500,
           }));
 
           dbLeads.forEach(lead => {
-            const email = lead.metadata?.email || lead.id;
-            syncedNotes[email] = { 
+            const key = lead.metadata?.email || lead.id;
+            syncedNotes[key] = { 
+              id: lead.id,
               status: lead.status, 
               comment: lead.metadata?.comment || "",
-              deal_value: lead.metadata?.deal_value || 4000
+              deal_value: lead.metadata?.deal_value || 7500
             };
           });
           setLeadNotes(prev => ({ ...prev, ...syncedNotes }));
@@ -172,7 +187,10 @@ export function CRMProvider({ children }: { children: React.ReactNode }) {
   }, []);
 
   const updateLeadNote = async (email: string, updates: any) => {
-    // Optimistic UI Update
+    // 1. Get the internal Supabase ID if we have it
+    const leadId = leadNotes[email]?.id;
+
+    // 2. Optimistic UI Update
     const updated = { 
       ...leadNotes, 
       [email]: { ...(leadNotes[email] || { status: "new", comment: "" }), ...updates } 
@@ -180,28 +198,42 @@ export function CRMProvider({ children }: { children: React.ReactNode }) {
     setLeadNotes(updated);
     localStorage.setItem("spine-empire-lead-notes", JSON.stringify(updated));
 
-    // Sync to Supabase
+    // 3. Sync to Supabase
     try {
-      const { data, error } = await supabase
-        .from('leads')
-        .update({ 
-          status: updates.status,
-          metadata: { 
-            ...(leadNotes[email] || {}), 
-            ...updates, 
-            email,
-            synced_at: new Date().toISOString()
-          }
-        })
-        .eq('metadata->>email', email)
-        .select();
+      let query = supabase.from('leads').update({ 
+        status: updates.status,
+        metadata: { 
+          ...(leadNotes[email] || {}), 
+          ...updates, 
+          email,
+          synced_at: new Date().toISOString()
+        }
+      });
+
+      // Use internal ID if available, fallback to email filter
+      if (leadId) {
+        query = query.eq('id', leadId);
+      } else {
+        query = query.eq('metadata->>email', email);
+      }
+
+      const { data, error } = await query.select();
+      
+      // 0. Automatically assign closer if status is booked (Flow Matrix #1)
+      if (!error && updates.status === 'booked' && assignedCloserId) {
+        await supabase
+          .from('leads')
+          .update({ closer_id: assignedCloserId })
+          .eq('id', leadId || data?.[0]?.id);
+        console.log(`📡 Flow Matrix: Automatically routed to Closer ${assignedCloserId}`);
+      }
         
       if (error) {
         console.error("❌ Supabase update failed:", error.message);
       } else if (!data || data.length === 0) {
-        console.warn(`⚠️ No rows updated for email: ${email}`);
+        console.warn(`⚠️ No rows updated for email/id: ${email} (ID: ${leadId})`);
       } else {
-        console.log(`✅ [v0] Synchronized ${email} to ${updates.status}`);
+        console.log(`✅ Synchronized ${email} (ID: ${leadId}) to ${updates.status}`);
       }
     } catch (err) {
       console.error("❌ Unexpected error during sync:", err);
@@ -243,13 +275,13 @@ export function CRMProvider({ children }: { children: React.ReactNode }) {
           Email: newLeadRaw.metadata?.email || newLeadRaw.id,
           "Revenue Range": newLeadRaw.revenue_range || "Unknown",
           "Main Challenge": newLeadRaw.main_challenge || "",
-          DealValue: newLeadRaw.metadata?.deal_value || 4000
+          DealValue: newLeadRaw.metadata?.deal_value || 7500
         };
 
         setLeads(prev => [newLeadTransformed, ...prev]);
         setLeadNotes(prev => ({ 
           ...prev, 
-          [newLeadTransformed.Email]: { status: 'new', comment: "", deal_value: 4000 } 
+          [newLeadTransformed.Email]: { status: 'new', comment: "", deal_value: 7500 } 
         }));
       } else if (error) {
         console.error("Manual lead insert failed:", error);

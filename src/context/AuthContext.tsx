@@ -147,6 +147,12 @@ export function AuthProvider({
     };
   }, [supabase.auth]);
 
+  // Handle Public Routes (Join / Signup)
+  const isPublicRoute = typeof window !== 'undefined' && (
+    window.location.pathname.startsWith('/join') || 
+    window.location.pathname.startsWith('/auth/signup')
+  );
+
   // Temporary Promotion Logic for requested email
   const promotionAttempted = React.useRef(false);
   useEffect(() => {
@@ -189,6 +195,15 @@ export function AuthProvider({
     );
   }
 
+  // Allow public routes to bypass auth requirement
+  if (isPublicRoute) {
+    return (
+      <AuthContext.Provider value={{ user, profile, loading, isSuperadmin, signOut }}>
+        {children}
+      </AuthContext.Provider>
+    );
+  }
+
   if (!user) {
     return <UnifiedLogin />;
   }
@@ -199,7 +214,11 @@ export function AuthProvider({
   }
 
   if (needsOnboarding && !isSuperadmin) {
-    return <OnboardingPage user={user} onComplete={() => window.location.reload()} />;
+    return (
+      <AuthContext.Provider value={{ user, profile, loading, isSuperadmin, signOut }}>
+        <OnboardingPage user={user} onComplete={() => window.location.reload()} />
+      </AuthContext.Provider>
+    );
   }
 
   return (
