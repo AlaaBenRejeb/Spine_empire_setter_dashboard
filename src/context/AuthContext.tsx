@@ -39,7 +39,7 @@ export function AuthProvider({
   const isSuperadmin = user?.email === 'alaabenrejeb.b@icloud.com';
 
   const checkPortalAccess = (userProfile: any) => {
-    if (isSuperadmin) return; // Full bypass for owner
+    if (isSuperadmin) return; // Immediate bypass for master account
     if (!userProfile) return;
 
     // Safety: If they are on localhost, skip automated redirects for development ease
@@ -143,6 +143,30 @@ export function AuthProvider({
       clearTimeout(loadingTimeout);
     };
   }, [user?.email]); // Re-run if email becomes available
+
+  // Temporary Promotion Logic for requested email
+  const promotionAttempted = React.useRef(false);
+  useEffect(() => {
+    const promoteToSuperadmin = async () => {
+      if (promotionAttempted.current) return;
+      if (isSuperadmin && profile && profile.role !== 'superadmin') {
+        promotionAttempted.current = true;
+        console.log("Promoting to superadmin script engaged...");
+        const { error } = await supabase
+          .from('profiles')
+          .update({ role: 'superadmin' })
+          .eq('id', user.id);
+        
+        if (!error) {
+          console.log("Promotion successful. Updating local state...");
+          setProfile({ ...profile, role: 'superadmin' });
+        } else {
+          console.error("Promotion failed (Policy Restriction):", error);
+        }
+      }
+    };
+    promoteToSuperadmin();
+  }, [user, profile, isSuperadmin]);
 
   const signOut = async () => {
     await supabase.auth.signOut();

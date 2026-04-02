@@ -20,37 +20,37 @@ export default function Sidebar() {
   ];
 
   return (
-    <aside className="hidden lg:flex w-72 flex-col gap-10 h-screen sticky top-0 p-10 border-r border-glass-border bg-background transition-all duration-300">
-      <div className="flex items-center gap-4 px-2 cursor-pointer">
-        <div className="w-12 h-12 bg-black text-white dark:bg-white dark:text-black rounded-xl shadow-sm flex items-center justify-center border border-black transition-all">
-          <Zap size={24} strokeWidth={2.5} />
+    <aside className="hidden lg:flex w-64 flex-col gap-6 h-screen sticky top-0 p-6 border-r border-glass-border bg-background transition-all duration-300 overflow-hidden">
+      <div className="flex items-center gap-3 px-1 cursor-pointer">
+        <div className="w-10 h-10 bg-black text-white dark:bg-white dark:text-black rounded-lg shadow-sm flex items-center justify-center border border-black transition-all">
+          <Zap size={20} strokeWidth={2.5} />
         </div>
         <div className="flex flex-col">
-          <span className="text-xl font-heading font-bold tracking-tight uppercase leading-none">Spine Empire</span>
-          <span className="text-[10px] font-bold tracking-[0.2em] opacity-40 uppercase">Setter {profile?.first_name || 'Node'}</span>
+          <span className="text-lg font-heading font-bold tracking-tight uppercase leading-none italic">Spine Engine</span>
+          <span className="text-[9px] font-bold tracking-[0.1em] opacity-40 uppercase">Setter Terminal</span>
         </div>
       </div>
 
-      <nav className="flex flex-col gap-2 mt-12 flex-1">
+      <nav className="flex flex-col gap-1 mt-4 flex-1 overflow-y-auto hide-scrollbar custom-scrollbar pr-1">
         {menuItems.map((item) => {
           const isActive = pathname === item.href;
           return (
             <Link key={item.name} href={item.href}>
               <motion.div
-                whileHover={{ x: 4 }}
+                whileHover={{ x: 2 }}
                 whileTap={{ scale: 0.98 }}
-                className={`p-4 rounded-xl flex items-center justify-between font-bold transition-all duration-200 group ${
+                className={`p-3 rounded-lg flex items-center justify-between font-bold transition-all duration-200 group ${
                   isActive 
-                    ? "bg-black text-white dark:bg-white dark:text-black shadow-lg" 
-                    : "text-muted-foreground hover:bg-secondary hover:text-foreground"
+                    ? "bg-black text-white dark:bg-white dark:text-black shadow-md" 
+                    : "text-muted-foreground hover:bg-secondary/50 hover:text-foreground"
                 }`}
               >
-                <div className="flex items-center gap-4">
-                  <item.icon size={20} strokeWidth={isActive ? 2.5 : 2} />
-                  <span className="text-xs uppercase tracking-widest font-bold">{item.name}</span>
+                <div className="flex items-center gap-3">
+                  <item.icon size={18} strokeWidth={isActive ? 2.5 : 2} />
+                  <span className="text-[10px] uppercase tracking-widest font-black leading-none">{item.name}</span>
                 </div>
                 {isActive && (
-                  <div className="w-1.5 h-1.5 rounded-full bg-white dark:bg-black" />
+                  <div className="w-1 h-1 rounded-full bg-white dark:bg-black" />
                 )}
               </motion.div>
             </Link>
@@ -58,12 +58,12 @@ export default function Sidebar() {
         })}
       </nav>
 
-      <div className="pt-8 border-t border-glass-border flex flex-col gap-2">
-        <Link href="/settings" className="text-muted-foreground p-4 rounded-xl flex items-center gap-4 font-bold uppercase text-[10px] tracking-widest hover:bg-secondary hover:text-foreground transition-all cursor-pointer">
-          <Settings size={18} /> Settings
+      <div className="pt-4 border-t border-glass-border flex flex-col gap-1">
+        <Link href="/settings" className="text-muted-foreground p-3 rounded-lg flex items-center gap-3 font-bold uppercase text-[9px] tracking-widest hover:bg-secondary/50 hover:text-foreground transition-all cursor-pointer">
+          <Settings size={16} /> Settings
         </Link>
-        <div onClick={signOut} className="text-muted-foreground p-4 rounded-xl flex items-center gap-4 font-bold uppercase text-[10px] tracking-widest hover:bg-red-500/10 hover:text-red-500 transition-all cursor-pointer">
-          <LogOut size={18} /> Exit
+        <div onClick={signOut} className="text-muted-foreground p-3 rounded-lg flex items-center gap-3 font-bold uppercase text-[9px] tracking-widest hover:bg-red-500/10 hover:text-red-500 transition-all cursor-pointer">
+          <LogOut size={16} /> Exit
         </div>
       </div>
     </aside>
