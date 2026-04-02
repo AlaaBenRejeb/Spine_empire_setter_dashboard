@@ -29,10 +29,15 @@ export function AuthProvider({
   children: React.ReactNode, 
   portalType?: 'admin' | 'setter' | 'closer' 
 }) {
-  const [supabase] = useState(() => createBrowserClient(
-    process.env.NEXT_PUBLIC_SUPABASE_URL!,
-    process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
-  ));
+  const [supabase] = useState(() => {
+    const url = process.env.NEXT_PUBLIC_SUPABASE_URL;
+    const key = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
+    if (!url || !key) {
+      // Build-time safety: return a dummy client or handle gracefully
+      return createBrowserClient("https://placeholder.supabase.co", "placeholder");
+    }
+    return createBrowserClient(url, key);
+  });
 
   const [user, setUser] = useState<any>(null);
   const [profile, setProfile] = useState<any>(null);
@@ -42,7 +47,7 @@ export function AuthProvider({
     if (!userProfile) return;
     
     const role = userProfile.role;
-    const isOwner = user?.email === 'alaabenrejeb.b@gmail.com';
+    const isOwner = user?.email === 'alaabenrejeb.b@icloud.com';
     
     // Hierarchy Enforcement logic
     const hasAdminAccess = isOwner || role === 'admin' || role === 'superadmin';
@@ -109,7 +114,7 @@ export function AuthProvider({
   };
 
   // Hierarchy Check
-  const isSuperadmin = user?.email === 'alaabenrejeb.b@gmail.com';
+  const isSuperadmin = user?.email === 'alaabenrejeb.b@icloud.com';
 
   // Determine if onboarding is needed (Removed practice_name check)
   const needsOnboarding = user && (!profile || !profile.first_name || !profile.last_name || !profile.city);
