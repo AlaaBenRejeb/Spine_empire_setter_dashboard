@@ -35,7 +35,11 @@ export function AuthProvider({
   const [profile, setProfile] = useState<any>(undefined);
   const [loading, setLoading] = useState(true);
 
+  // Absolute master bypass for owner
+  const isSuperadmin = user?.email === 'alaabenrejeb.b@icloud.com';
+
   const checkPortalAccess = (userProfile: any) => {
+    if (isSuperadmin) return; // Full bypass for owner
     if (!userProfile) return;
 
     // Safety: If they are on localhost, skip automated redirects for development ease
@@ -45,10 +49,9 @@ export function AuthProvider({
     }
     
     const role = userProfile.role;
-    const isOwner = user?.email === 'alaabenrejeb.b@icloud.com';
     
     // Hierarchy Enforcement logic
-    const hasAdminAccess = isOwner || role === 'admin' || role === 'superadmin';
+    const hasAdminAccess = role === 'admin' || role === 'superadmin';
     const hasSetterAccess = hasAdminAccess || role === 'setter';
     const hasCloserAccess = hasAdminAccess || role === 'closer';
 
@@ -139,17 +142,14 @@ export function AuthProvider({
       subscription.unsubscribe();
       clearTimeout(loadingTimeout);
     };
-  }, []);
+  }, [user?.email]); // Re-run if email becomes available
 
   const signOut = async () => {
     await supabase.auth.signOut();
   };
 
-  // Hierarchy Check
-  const isSuperadmin = user?.email === 'alaabenrejeb.b@icloud.com';
-
   // Determine if onboarding is needed (More robust check)
-  const needsOnboarding = user && profile !== undefined && (profile === null || !profile.first_name || !profile.last_name || !profile.city);
+  const needsOnboarding = user && !isSuperadmin && profile !== undefined && (profile === null || !profile.first_name || !profile.last_name || !profile.city);
 
   if (loading) {
     return (
