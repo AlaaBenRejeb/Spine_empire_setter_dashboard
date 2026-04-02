@@ -3,13 +3,10 @@
 import { motion } from "framer-motion";
 import { Zap, Shield, ChevronRight, Mail, Lock, User, Target, Crosshair, Trophy } from "lucide-react";
 import { useState } from "react";
-import { createBrowserClient } from "@supabase/ssr";
+import { createClient } from "@/lib/supabase/client";
 
 export default function UnifiedLogin() {
-  const [supabase] = useState(() => createBrowserClient(
-    process.env.NEXT_PUBLIC_SUPABASE_URL!,
-    process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
-  ));
+  const [supabase] = useState(() => createClient());
 
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");

@@ -29,6 +29,7 @@ export default function OnboardingPage({ user, onComplete }: { user: any, onComp
           first_name: firstName,
           last_name: lastName,
           city: city,
+          role: 'setter',
           updated_at: new Date().toISOString(),
         });
 
@@ -68,7 +69,8 @@ export default function OnboardingPage({ user, onComplete }: { user: any, onComp
               {[
                 { s: 1, label: "Identity Node", icon: UserCircle },
                 { s: 2, label: "Eco-Location", icon: MapPin },
-                { s: 3, label: "Sync Terminal", icon: Shield }
+                { s: 3, label: "Logic Lock", icon: Shield },
+                { s: 4, label: "Setter Sync", icon: Zap }
               ].map((item) => (
                 <div key={item.s} className={`flex items-center gap-4 transition-all duration-500 ${step >= item.s ? 'text-white' : 'text-white/10'}`}>
                    <div className={`w-12 h-12 rounded-2xl flex items-center justify-center border-2 transition-all duration-500 ${step === item.s ? 'bg-white text-black border-white shadow-[0_0_20px_rgba(255,255,255,0.1)]' : step > item.s ? 'bg-emerald-500/10 border-emerald-500 text-emerald-500' : 'bg-transparent border-white/5'}`}>
@@ -168,25 +170,58 @@ export default function OnboardingPage({ user, onComplete }: { user: any, onComp
 
            {step === 3 && (
              <motion.div 
+               initial={{ opacity: 0, x: 20 }} animate={{ opacity: 1, x: 0 }}
+               className="flex flex-col gap-10"
+             >
+                <div className="flex flex-col gap-2">
+                   <h2 className="text-5xl font-heading font-black uppercase italic tracking-tighter leading-none text-white">Verification.</h2>
+                   <p className="text-[10px] font-black uppercase tracking-widest text-white/30 italic">Final structural checks before synchronization</p>
+                </div>
+                <div className="grid grid-cols-1 gap-4">
+                   {[
+                     "Biometric Identity Confirmed",
+                     "Location Node Assigned",
+                     "Security Protocols Active"
+                   ].map((check, i) => (
+                     <div key={i} className="p-6 bg-white/5 border border-white/10 rounded-2xl flex items-center justify-between">
+                        <span className="text-[10px] font-black uppercase tracking-widest text-white/60 italic">{check}</span>
+                        <CheckCircle2 size={16} className="text-emerald-500" />
+                     </div>
+                   ))}
+                </div>
+                <div className="flex gap-6 mt-4">
+                   <button onClick={() => setStep(2)} className="flex-1 bg-white/5 text-white/40 border border-white/5 py-6 rounded-3xl font-black text-[12px] uppercase tracking-[0.4em] hover:bg-white/10 transition-all italic">Back</button>
+                   <button 
+                     onClick={() => setStep(4)} 
+                     className="flex-[2] bg-white text-black py-6 rounded-3xl font-black text-[12px] uppercase tracking-[0.4em] flex items-center justify-center gap-4 hover:shadow-[0_0_50px_rgba(255,255,255,0.2)] transition-all italic"
+                   >
+                     Initiate Sync <ChevronRight size={18} strokeWidth={3} />
+                   </button>
+                </div>
+             </motion.div>
+           )}
+
+           {step === 4 && (
+             <motion.div 
                initial={{ opacity: 0, scale: 0.98 }} animate={{ opacity: 1, scale: 1 }}
                className="flex flex-col gap-10 items-center text-center"
              >
-                <div className="w-24 h-24 bg-emerald-500/10 text-emerald-500 rounded-[2.5rem] flex items-center justify-center border-4 border-emerald-500 shadow-[0_0_60px_rgba(16,185,129,0.2)] mb-4">
+                <div className="w-24 h-24 bg-white text-black rounded-[2.5rem] flex items-center justify-center border-4 border-white shadow-[0_0_60px_rgba(255,255,255,0.2)] mb-4">
                    <Target size={40} className="animate-pulse" />
                 </div>
                 <div className="flex flex-col gap-2">
-                   <h2 className="text-5xl font-heading font-black uppercase italic tracking-tighter leading-none text-white">Sync Ready.</h2>
-                   <p className="text-white/40 text-sm leading-relaxed max-w-sm">All identity and location nodes have been verified. Finalize initialization to sync this terminal with the Spine Empire network.</p>
+                   <h2 className="text-5xl font-heading font-black uppercase italic tracking-tighter leading-none text-white text-gradient">Sync Ready.</h2>
+                   <p className="text-white/40 text-xs font-bold leading-relaxed max-w-sm uppercase tracking-widest">Lead Generation Node Activated. Your terminal is now authorized to generate leads and sync with the closer network.</p>
                 </div>
 
                 <button 
                   onClick={handleFinish}
                   disabled={loading}
-                  className="w-full bg-emerald-500 text-black py-6 mt-6 rounded-[2rem] font-black text-[14px] uppercase tracking-[0.4em] flex items-center justify-center gap-4 hover:shadow-[0_0_60px_rgba(16,185,129,0.3)] active:scale-95 transition-all group disabled:opacity-30"
+                  className="w-full bg-white text-black py-6 mt-6 rounded-[2rem] font-black text-[14px] uppercase tracking-[0.4em] flex items-center justify-center gap-4 hover:shadow-[0_0_60px_rgba(255,255,255,0.3)] active:scale-95 transition-all group disabled:opacity-30"
                 >
                   {loading ? "Initializing..." : "Finalize Deployment"}
                 </button>
-                <p className="text-[8px] font-black tracking-[0.6em] text-white/5 uppercase mt-4">Security Protocol Active • ID: {user.id.slice(0,8)}</p>
+                <p className="text-[8px] font-black tracking-[0.6em] text-white/5 uppercase mt-4 italic">Lead Hub V1.0 • ID: {user.id.slice(0,8)}</p>
              </motion.div>
            )}
         </div>

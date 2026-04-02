@@ -1,7 +1,7 @@
 "use client";
 
 import React, { createContext, useContext, useEffect, useState } from "react";
-import { createBrowserClient } from "@supabase/ssr";
+import { createClient } from "@/lib/supabase/client";
 import UnifiedLogin from "@/components/UnifiedLogin";
 import OnboardingPage from "@/components/OnboardingPage";
 import { motion, AnimatePresence } from "framer-motion";
@@ -24,20 +24,12 @@ const AuthContext = createContext<AuthContextType | undefined>(undefined);
 
 export function AuthProvider({ 
   children, 
-  portalType = 'admin' 
+  portalType = 'setter' 
 }: { 
   children: React.ReactNode, 
   portalType?: 'admin' | 'setter' | 'closer' 
 }) {
-  const [supabase] = useState(() => {
-    const url = process.env.NEXT_PUBLIC_SUPABASE_URL;
-    const key = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
-    if (!url || !key) {
-      // Build-time safety: return a dummy client or handle gracefully
-      return createBrowserClient("https://placeholder.supabase.co", "placeholder");
-    }
-    return createBrowserClient(url, key);
-  });
+  const [supabase] = useState(() => createClient());
 
   const [user, setUser] = useState<any>(null);
   const [profile, setProfile] = useState<any>(null);
@@ -45,6 +37,12 @@ export function AuthProvider({
 
   const checkPortalAccess = (userProfile: any) => {
     if (!userProfile) return;
+
+    // Safety: If they are on localhost, skip automated redirects for development ease
+    if (typeof window !== 'undefined' && (window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1')) {
+      console.log("Development Mode: Skipping hierarchy redirection on localhost.");
+      return;
+    }
     
     const role = userProfile.role;
     const isOwner = user?.email === 'alaabenrejeb.b@icloud.com';
@@ -62,48 +60,69 @@ export function AuthProvider({
     if (!isAuthorized) {
       console.warn("Hierarchy Breach: Redirecting to authorized portal...");
       
-      // Strategic Hierarchy Redirection (Enforced in ALL environments)
-      const targetPortal = role === 'admin' || role === 'superadmin' ? 'admin' : role;
+      const targetPortal = role === 'admin' || role === 'superadmin' ? 'admin' : role || 'setter';
       const targetUrl = PORTAL_MAP[targetPortal] || PORTAL_MAP['setter'];
       
-      // Strict Gatekeeping: Redirect to authorized terminal
-      window.location.href = targetUrl;
+      if (typeof window !== 'undefined' && !window.location.href.includes(targetUrl.replace('https://', ''))) {
+        window.location.href = targetUrl;
+      }
     }
   };
 
   useEffect(() => {
     const initAuth = async () => {
-      const { data: { session } } = await supabase.auth.getSession();
-      if (session?.user) {
-        setUser(session.user);
-        const { data: profileData } = await supabase
-          .from('profiles')
-          .select('*')
-          .eq('id', session.user.id)
-          .single();
-        setProfile(profileData);
-        checkPortalAccess(profileData);
+      try {
+        const { data: { session } } = await supabase.auth.getSession();
+        if (session?.user) {
+          setUser(session.user);
+          const { data: profileData } = await supabase
+            .from('profiles')
+            .select('*')
+            .eq('id', session.user.id)
+            .single();
+          
+          if (profileData) {
+            setProfile(profileData);
+            checkPortalAccess(profileData);
+          } else {
+            console.log("No profile detected - triggering onboarding.");
+            setProfile(null);
+          }
+        }
+      } catch (error: any) {
+        console.error("Critical Auth Sync Failure:", error);
+      } finally {
+        setLoading(false);
       }
-      setLoading(false);
     };
 
     initAuth();
 
-    const { data: { subscription } } = supabase.auth.onAuthStateChange(async (event, session) => {
-      if (session?.user) {
-        setUser(session.user);
-        const { data: profileData } = await supabase
-          .from('profiles')
-          .select('*')
-          .eq('id', session.user.id)
-          .single();
-        setProfile(profileData);
-        checkPortalAccess(profileData);
-      } else {
-        setUser(null);
-        setProfile(null);
+    const { data: { subscription } } = supabase.auth.onAuthStateChange(async (event: any, session: any) => {
+      try {
+        if (session?.user) {
+          setUser(session.user);
+          const { data: profileData } = await supabase
+            .from('profiles')
+            .select('*')
+            .eq('id', session.user.id)
+            .single();
+          
+          if (profileData) {
+            setProfile(profileData);
+            checkPortalAccess(profileData);
+          } else {
+            setProfile(null);
+          }
+        } else {
+          setUser(null);
+          setProfile(null);
+        }
+      } catch (error: any) {
+        console.error("Auth state update error:", error);
+      } finally {
+        setLoading(false);
       }
-      setLoading(false);
     });
 
     return () => subscription.unsubscribe();
