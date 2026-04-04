@@ -44,41 +44,29 @@ export function CRMProvider({ children }: { children: React.ReactNode }) {
     DealValue: lead.metadata?.deal_value || 6500,
   });
 
-  // 1. Initial Data Load & Auth
+  // 1. Initial Data Load — driven by auth state, no competing getSession() call
   useEffect(() => {
-    const initCRM = async () => {
+    const saved = localStorage.getItem("spine-empire-lead-notes");
+    if (saved) setLeadNotes(JSON.parse(saved));
+
+    const fetchLeads = async (sessionUser: any) => {
       setLoading(true);
-      
-      const { data: { session } } = await supabase.auth.getSession();
-      let currentUser = null;
-      if (session?.user) {
-        setUser(session.user);
-        currentUser = session.user;
+      try {
         const { data: profile } = await supabase
           .from('profiles')
           .select('role')
-          .eq('id', session.user.id)
+          .eq('id', sessionUser.id)
           .single();
         setUserRole(profile?.role || 'setter');
-      }
 
-      // Initial fetch of assigned closer
-      if (currentUser) {
         const { data: mapping } = await supabase
           .from('setter_closer_mapping')
           .select('closer_id')
-          .eq('setter_id', currentUser.id)
+          .eq('setter_id', sessionUser.id)
           .single();
         if (mapping?.closer_id) setAssignedCloserId(mapping.closer_id);
-      }
 
-      const saved = localStorage.getItem("spine-empire-lead-notes");
-      if (saved) setLeadNotes(JSON.parse(saved));
-
-      try {
         const { data: dbLeads, error } = await supabase.from('leads').select('*');
-
-        console.log('📡 Leads query:', { count: dbLeads?.length, error: error?.message });
 
         if (error) {
           console.error('❌ Leads fetch failed:', error.message, error.code);
@@ -98,7 +86,6 @@ export function CRMProvider({ children }: { children: React.ReactNode }) {
             "Main Challenge": lead.main_challenge || "",
             DealValue: lead.metadata?.deal_value || 6500,
           }));
-
           dbLeads.forEach((lead: any) => {
             const key = lead.metadata?.email || lead.id;
             syncedNotes[key] = {
@@ -118,14 +105,22 @@ export function CRMProvider({ children }: { children: React.ReactNode }) {
       }
     };
 
-    initCRM();
+    // Subscribe to auth state — fires with INITIAL_SESSION on load, no competing getSession()
+    const { data: { subscription } } = supabase.auth.onAuthStateChange((_event: any, session: any) => {
+      if (session?.user) {
+        setUser(session.user);
+        fetchLeads(session.user);
+      } else {
+        setLoading(false);
+      }
+    });
 
     // 2. Real-time Lead Sync
     const channel = supabase
       .channel('leads-setter-sync')
       .on('postgres_changes', { event: '*', schema: 'public', table: 'leads' }, (payload: any) => {
         const updated = (payload.eventType === 'DELETE' ? payload.old : payload.new) as any;
-        
+
         if (payload.eventType === 'DELETE') {
           const email = updated.metadata?.email || updated.id;
           setLeads(prev => prev.filter(l => l.Email !== email));
@@ -156,6 +151,7 @@ export function CRMProvider({ children }: { children: React.ReactNode }) {
       .subscribe();
 
     return () => {
+      subscription.unsubscribe();
       supabase.removeChannel(channel);
     };
   }, []);
