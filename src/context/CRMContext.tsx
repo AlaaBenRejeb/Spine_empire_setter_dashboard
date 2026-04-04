@@ -1,6 +1,6 @@
 "use client";
 
-import React, { createContext, useContext, useEffect, useState } from "react";
+import React, { createContext, useContext, useEffect, useRef, useState } from "react";
 import { createClient } from "@/lib/supabase/client";
 
 const supabase = createClient();
@@ -29,6 +29,7 @@ export function CRMProvider({ children }: { children: React.ReactNode }) {
   const [userRole, setUserRole] = useState<string | null>(null);
   const [assignedCloserId, setAssignedCloserId] = useState<string | null>(null);
   const [assignedCloserName, setAssignedCloserName] = useState<string | null>(null);
+  const fetchedRef = useRef(false);
 
   const transformLead = (lead: any) => ({
     "Practice Name": lead.business_name,
@@ -63,7 +64,7 @@ export function CRMProvider({ children }: { children: React.ReactNode }) {
           .from('setter_closer_mapping')
           .select('closer_id')
           .eq('setter_id', sessionUser.id)
-          .single();
+          .maybeSingle();
         if (mapping?.closer_id) setAssignedCloserId(mapping.closer_id);
 
         const { data: dbLeads, error } = await supabase.from('leads').select('*');
@@ -107,10 +108,11 @@ export function CRMProvider({ children }: { children: React.ReactNode }) {
 
     // Subscribe to auth state — fires with INITIAL_SESSION on load, no competing getSession()
     const { data: { subscription } } = supabase.auth.onAuthStateChange((_event: any, session: any) => {
-      if (session?.user) {
+      if (session?.user && !fetchedRef.current) {
+        fetchedRef.current = true;
         setUser(session.user);
         fetchLeads(session.user);
-      } else {
+      } else if (!session?.user) {
         setLoading(false);
       }
     });
@@ -225,7 +227,7 @@ export function CRMProvider({ children }: { children: React.ReactNode }) {
             .from('setter_closer_mapping')
             .select('closer_id')
             .eq('setter_id', user.id)
-            .single();
+            .maybeSingle();
           closerId = mapping?.closer_id;
         }
 
