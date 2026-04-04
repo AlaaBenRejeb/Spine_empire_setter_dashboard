@@ -67,7 +67,7 @@ export function CRMProvider({ children }: { children: React.ReactNode }) {
           .maybeSingle();
         if (mapping?.closer_id) setAssignedCloserId(mapping.closer_id);
 
-        const { data: dbLeads, error } = await supabase.from('leads').select('*');
+        const { data: dbLeads, error } = await supabase.from('leads').select('*').not('setter_id', 'is', null);
 
         if (error) {
           console.error('❌ Leads fetch failed:', error.message, error.code);
