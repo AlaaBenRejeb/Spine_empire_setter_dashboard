@@ -153,12 +153,102 @@ export function AuthProvider({
   // Determine if onboarding is needed (More robust check)
   const needsOnboarding = user && !isSuperadmin && profile !== undefined && (profile === null || !profile.first_name || !profile.last_name || !profile.city);
 
+  // --- Strategic Failsafe: Infinite Sync Protection ---
+  useEffect(() => {
+    if (!loading) return;
+    const failsafe = setTimeout(() => {
+      if (loading) {
+        console.warn("Auth Synchronization Timeout: Engaging Fail-safe protocols.");
+        setLoading(false);
+      }
+    }, 60000); // 60 Second Strategic Window
+    return () => clearTimeout(failsafe);
+  }, [loading]);
+
+  const [statusIndex, setStatusIndex] = useState(0);
+  const STATUS_MESSAGES = [
+    "Initializing Strategic Command...",
+    "Establishing Neural Handshake...",
+    "Synchronizing Market Intelligence...",
+    "Deploying Global Assets...",
+    "Finalizing Nexus Encryption..."
+  ];
+
+  useEffect(() => {
+    if (!loading) return;
+    const interval = setInterval(() => {
+      setStatusIndex((prev) => (prev + 1) % STATUS_MESSAGES.length);
+    }, 2500);
+    return () => clearInterval(interval);
+  }, [loading]);
+
   if (loading) {
     return (
-      <div className="h-screen w-screen bg-black flex items-center justify-center">
-        <div className="flex flex-col items-center gap-6">
-           <div className="w-16 h-16 border-4 border-white/10 border-t-white rounded-full animate-spin" />
-           <span className="text-[10px] font-black uppercase tracking-[0.4em] text-white/40 animate-pulse">Synchronizing Empire...</span>
+      <div className="h-screen w-screen bg-black flex items-center justify-center overflow-hidden font-sans">
+        {/* Ambient Grid Background */}
+        <div className="absolute inset-0 z-0 opacity-20" 
+             style={{ backgroundImage: 'radial-gradient(circle at 2px 2px, rgba(255,255,255,0.05) 1px, transparent 0)', backgroundSize: '40px 40px' }} />
+        
+        <div className="relative z-10 flex flex-col items-center gap-12 w-full max-w-md px-10">
+          {/* Animated Core */}
+          <div className="relative">
+            <motion.div 
+              animate={{ rotate: 360 }}
+              transition={{ duration: 8, repeat: Infinity, ease: "linear" }}
+              className="w-24 h-24 rounded-[2.5rem] border-2 border-white/5 flex items-center justify-center relative"
+            >
+              <div className="absolute inset-0 rounded-[2.5rem] border-t-2 border-white shadow-[0_0_20px_rgba(255,255,255,0.1)]" />
+            </motion.div>
+            <motion.div 
+              animate={{ scale: [1, 1.1, 1], opacity: [0.3, 0.6, 0.3] }}
+              transition={{ duration: 3, repeat: Infinity, ease: "easeInOut" }}
+              className="absolute inset-0 flex items-center justify-center"
+            >
+               <div className="w-8 h-8 bg-white rounded-full blur-xl" />
+            </motion.div>
+          </div>
+
+          {/* Dynamic Intel Feed */}
+          <div className="flex flex-col items-center gap-3 w-full">
+            <AnimatePresence mode="wait">
+              <motion.div
+                key={statusIndex}
+                initial={{ opacity: 0, y: 10, filter: "blur(4px)" }}
+                animate={{ opacity: 1, y: 0, filter: "blur(0px)" }}
+                exit={{ opacity: 0, y: -10, filter: "blur(4px)" }}
+                transition={{ duration: 0.8, ease: [0.16, 1, 0.3, 1] }}
+                className="text-center"
+              >
+                <span className="text-[12px] font-black uppercase tracking-[0.5em] text-white leading-loose whitespace-nowrap">
+                  {STATUS_MESSAGES[statusIndex]}
+                </span>
+              </motion.div>
+            </AnimatePresence>
+            
+            {/* Progress Micro-bar */}
+            <div className="w-32 h-1 bg-white/5 rounded-full overflow-hidden border border-white/5 relative">
+               <motion.div 
+                 initial={{ x: "-100%" }}
+                 animate={{ x: "100%" }}
+                 transition={{ duration: 2, repeat: Infinity, ease: "easeInOut" }}
+                 className="absolute inset-0 bg-white/20 blur-[1px]"
+               />
+            </div>
+          </div>
+
+          <div className="flex flex-col items-center gap-1 opacity-20">
+             <span className="text-[7px] font-bold uppercase tracking-[0.3em] text-white italic">Spine Empire Security Node</span>
+             <div className="flex gap-1">
+                {[...Array(3)].map((_, i) => (
+                  <motion.div 
+                    key={i}
+                    animate={{ opacity: [0, 1, 0] }}
+                    transition={{ duration: 1.5, repeat: Infinity, delay: i * 0.2 }}
+                    className="w-1 h-1 bg-white rounded-full" 
+                  />
+                ))}
+             </div>
+          </div>
         </div>
       </div>
     );
