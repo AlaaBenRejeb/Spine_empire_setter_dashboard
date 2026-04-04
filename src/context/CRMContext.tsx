@@ -208,9 +208,15 @@ export function CRMProvider({ children }: { children: React.ReactNode }) {
   const updateLeadNote = async (email: string, updates: any) => {
     const leadId = leadNotes[email]?.id;
 
+    const now = new Date().toISOString();
     const updated = { 
       ...leadNotes, 
-      [email]: { ...(leadNotes[email] || { status: "new", comment: "" }), ...updates } 
+      [email]: { 
+        ...(leadNotes[email] || { status: "new", comment: "" }), 
+        ...updates,
+        synced_at: now,
+        setter_id: user?.id
+      } 
     };
     setLeadNotes(updated);
     localStorage.setItem("spine-empire-lead-notes", JSON.stringify(updated));
@@ -222,7 +228,7 @@ export function CRMProvider({ children }: { children: React.ReactNode }) {
           ...(leadNotes[email] || {}), 
           ...updates, 
           email,
-          synced_at: new Date().toISOString()
+          synced_at: now
         }
       });
 

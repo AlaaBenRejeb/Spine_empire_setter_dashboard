@@ -25,7 +25,7 @@ export default function DealsPage() {
       const notes = leadNotes[lead.Email];
       const leadStatus = notes?.status || "new";
       return leadStatus === status;
-    }).slice(0, 50);
+    });
   };
 
   return (
@@ -76,7 +76,7 @@ export default function DealsPage() {
                 </button>
               </div>
 
-              <div className="flex-1 bg-secondary/30 rounded-3xl border-2 border-glass-border p-6 flex flex-col gap-6 overflow-y-auto hide-scrollbar group-hover:border-primary/20 transition-all hover:bg-secondary/50 shadow-inner translate-z-0">
+              <div className="flex-1 bg-secondary/30 rounded-3xl border-2 border-glass-border p-6 flex flex-col gap-6 overflow-y-auto custom-scrollbar group-hover:border-primary/20 transition-all hover:bg-secondary/50 shadow-inner translate-z-0">
                 {leads.map((lead: any, idx) => {
                    const reviews = parseInt(lead["Google Reviews"]?.toString() || "0");
                    return (

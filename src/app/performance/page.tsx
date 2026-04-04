@@ -8,24 +8,30 @@ import { useState, useMemo } from "react";
 type Timeframe = 'today' | 'month' | 'all';
 
 export default function PerformancePage() {
-  const { leads, leadNotes } = useCRM();
+  const { leads, leadNotes, user } = useCRM();
   const [timeframe, setTimeframe] = useState<Timeframe>('all');
 
   const filteredNotes = useMemo(() => {
     const now = new Date();
+    const today = now.toISOString().split('T')[0];
     const allNotes = Object.values(leadNotes);
     
     if (timeframe === 'today') {
-      return allNotes.filter((n: any) => n.synced_at && new Date(n.synced_at).toDateString() === now.toDateString());
+      return allNotes.filter((n: any) => {
+        if (!n.synced_at || !user?.id) return false;
+        return n.synced_at.startsWith(today) && n.setter_id === user.id;
+      });
     } else if (timeframe === 'month') {
       return allNotes.filter((n: any) => {
-        if (!n.synced_at) return false;
+        if (!n.synced_at || !user?.id) return false;
         const d = new Date(n.synced_at);
-        return d.getMonth() === now.getMonth() && d.getFullYear() === now.getFullYear();
+        const inMonth = d.getMonth() === now.getMonth() && d.getFullYear() === now.getFullYear();
+        const isCurrentUser = n.setter_id === user.id;
+        return inMonth && isCurrentUser;
       });
     }
     return allNotes;
-  }, [leadNotes, timeframe]);
+  }, [leadNotes, timeframe, user?.id]);
 
   const totalDials = filteredNotes.filter((s: any) => s.status !== "new").length;
   const totalBooked = filteredNotes.filter((s: any) => s.status === "booked").length;
