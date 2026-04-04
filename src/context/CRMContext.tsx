@@ -5,8 +5,23 @@ import { createClient } from "@/lib/supabase/client";
 
 const supabase = createClient();
 
-import { CRMProvider, useCRM } from "@/context/CRMContext";
 import { useAuth } from "@/context/AuthContext";
+
+interface CRMContextType {
+  activeLead: any;
+  setActiveLead: (lead: any) => void;
+  leadNotes: Record<string, any>;
+  updateLeadNote: (email: string, updates: any) => void;
+  addLead: (lead: any) => Promise<void>;
+  assignedCloserName: string | null;
+  leads: any[];
+  totalLeadsCount: number;
+  loading: boolean;
+  user: any;
+  userRole: string | null;
+}
+
+const CRMContext = createContext<CRMContextType | undefined>(undefined);
 
 export function CRMProvider({ children }: { children: React.ReactNode }) {
   const { user, profile: authProfile } = useAuth();
@@ -148,7 +163,6 @@ export function CRMProvider({ children }: { children: React.ReactNode }) {
       .subscribe();
 
     return () => {
-      subscription.unsubscribe();
       supabase.removeChannel(channel);
     };
   }, []);
