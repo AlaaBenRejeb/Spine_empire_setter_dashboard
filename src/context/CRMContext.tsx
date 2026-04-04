@@ -14,6 +14,7 @@ interface CRMContextType {
   loading: boolean;
   user: any;
   userRole: string | null;
+  assignedCloserName: string | null;
 }
 
 const CRMContext = createContext<CRMContextType | undefined>(undefined);
@@ -21,11 +22,12 @@ const CRMContext = createContext<CRMContextType | undefined>(undefined);
 export function CRMProvider({ children }: { children: React.ReactNode }) {
   const [activeLead, setActiveLead] = useState<any>(null);
   const [leadNotes, setLeadNotes] = useState<Record<string, any>>({});
-  const [leads, setLeads] = useState<any[]>(leadsData);
+  const [leads, setLeads] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
   const [user, setUser] = useState<any>(null);
   const [userRole, setUserRole] = useState<string | null>(null);
   const [assignedCloserId, setAssignedCloserId] = useState<string | null>(null);
+  const [assignedCloserName, setAssignedCloserName] = useState<string | null>(null);
 
   const transformLead = (lead: any) => ({
     "Practice Name": lead.business_name,
@@ -38,7 +40,7 @@ export function CRMProvider({ children }: { children: React.ReactNode }) {
     Email: lead.metadata?.email || lead.id,
     "Revenue Range": lead.revenue_range || "Unknown",
     "Main Challenge": lead.main_challenge || "",
-    DealValue: lead.metadata?.deal_value || 4000,
+    DealValue: lead.metadata?.deal_value || 6500,
   });
 
   // 1. Initial Data Load & Auth
@@ -89,7 +91,7 @@ export function CRMProvider({ children }: { children: React.ReactNode }) {
             Email: lead.metadata?.email || lead.id,
             "Revenue Range": lead.revenue_range || "Unknown",
             "Main Challenge": lead.main_challenge || "",
-            DealValue: lead.metadata?.deal_value || 7500,
+            DealValue: lead.metadata?.deal_value || 6500,
           }));
 
           dbLeads.forEach(lead => {
@@ -98,7 +100,7 @@ export function CRMProvider({ children }: { children: React.ReactNode }) {
               id: lead.id,
               status: lead.status, 
               comment: lead.metadata?.comment || "",
-              deal_value: lead.metadata?.deal_value || 7500
+              deal_value: lead.metadata?.deal_value || 6500
             };
           });
           setLeadNotes(prev => ({ ...prev, ...syncedNotes }));
@@ -150,7 +152,7 @@ export function CRMProvider({ children }: { children: React.ReactNode }) {
           [email]: {
             status: updated.status,
             comment: updated.metadata?.comment || "",
-            deal_value: updated.metadata?.deal_value || 4000
+            deal_value: updated.metadata?.deal_value || 6500
           }
         }));
 
@@ -174,6 +176,11 @@ export function CRMProvider({ children }: { children: React.ReactNode }) {
   useEffect(() => {
     if (!user?.id) return;
 
+    const fetchCloserName = async (closerId: string) => {
+      const { data } = await supabase.from('profiles').select('first_name').eq('id', closerId).single();
+      if (data?.first_name) setAssignedCloserName(data.first_name);
+    };
+
     const mappingChannel = supabase.channel(`mapping-${user.id}`)
       .on('postgres_changes', { 
         event: '*', 
@@ -184,13 +191,17 @@ export function CRMProvider({ children }: { children: React.ReactNode }) {
         console.log("📡 Flow Matrix Update:", payload);
         const newCloserId = payload.new?.closer_id || null;
         setAssignedCloserId(newCloserId);
+        if (newCloserId) fetchCloserName(newCloserId);
+        else setAssignedCloserName(null);
       })
       .subscribe();
+
+    if (assignedCloserId) fetchCloserName(assignedCloserId);
 
     return () => {
       supabase.removeChannel(mappingChannel);
     };
-  }, [user?.id]);
+  }, [user?.id, assignedCloserId]);
 
   const updateLeadNote = async (email: string, updates: any) => {
     const leadId = leadNotes[email]?.id;
@@ -288,13 +299,13 @@ export function CRMProvider({ children }: { children: React.ReactNode }) {
           Email: newLeadRaw.metadata?.email || newLeadRaw.id,
           "Revenue Range": newLeadRaw.revenue_range || "Unknown",
           "Main Challenge": newLeadRaw.main_challenge || "",
-          DealValue: newLeadRaw.metadata?.deal_value || 7500
+          DealValue: newLeadRaw.metadata?.deal_value || 6500
         };
 
         setLeads(prev => [newLeadTransformed, ...prev]);
         setLeadNotes(prev => ({ 
           ...prev, 
-          [newLeadTransformed.Email]: { status: 'new', comment: "", deal_value: 7500 } 
+          [newLeadTransformed.Email]: { status: 'new', comment: "", deal_value: 6500 } 
         }));
       }
     } catch (err) {
@@ -303,7 +314,7 @@ export function CRMProvider({ children }: { children: React.ReactNode }) {
   };
 
   return (
-    <CRMContext.Provider value={{ activeLead, setActiveLead, leadNotes, updateLeadNote, addLead, leads, loading, user, userRole }}>
+    <CRMContext.Provider value={{ activeLead, setActiveLead, leadNotes, updateLeadNote, addLead, leads, loading, user, userRole, assignedCloserName }}>
       {children}
     </CRMContext.Provider>
   );

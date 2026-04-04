@@ -3,7 +3,6 @@
 import { motion, AnimatePresence } from "framer-motion";
 import { Briefcase, MoreHorizontal, ChevronRight, Filter, Search, Plus, Target, Star, MapPin, Zap, User, Mail, MessageSquare, DollarSign, Phone, ArrowLeftRight, CheckCircle2 } from "lucide-react";
 import { useCRM } from "@/context/CRMContext";
-import leadsData from "@/data/leads.json";
 import FollowUpModal from "@/components/FollowUpModal";
 import { useState } from "react";
 
@@ -15,14 +14,14 @@ const COLUMNS = [
 ];
 
 export default function DealsPage() {
-  const { leadNotes, setActiveLead, updateLeadNote } = useCRM();
+  const { leads, leadNotes, setActiveLead, updateLeadNote } = useCRM();
   const [selectedLead, setSelectedLead] = useState<any>(null);
   const [isFollowUpOpen, setIsFollowUpOpen] = useState(false);
   const [followUpTab, setFollowUpTab] = useState<"email" | "sms">("email");
   const [stageSelectorId, setStageSelectorId] = useState<string | null>(null);
 
   const getLeadsByStatus = (status: string) => {
-    return leadsData.filter((lead) => {
+    return leads.filter((lead) => {
       const notes = leadNotes[lead.Email];
       const leadStatus = notes?.status || "new";
       return leadStatus === status;

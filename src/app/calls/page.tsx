@@ -3,15 +3,14 @@
 import { motion } from "framer-motion";
 import { PhoneCall, Calendar, Search, Filter, Phone, PhoneOutgoing, User, MessageSquare, MapPin } from "lucide-react";
 import { useCRM } from "@/context/CRMContext";
-import leadsData from "@/data/leads.json";
 
 export default function CallHistoryPage() {
-  const { leadNotes } = useCRM();
+  const { leads, leadNotes } = useCRM();
 
   const callLogs = Object.entries(leadNotes)
     .filter(([_, notes]) => notes.status === "called" || notes.status === "booked")
     .map(([email, notes]) => {
-      const lead = leadsData.find(l => l.Email === email);
+      const lead = leads.find((l: any) => l.Email === email);
       return { ...lead, ...notes };
     })
     .reverse();
