@@ -48,8 +48,10 @@ export default function SetterDashboardContent() {
   const [scheduledTime, setScheduledTime] = useState("09:00");
   const [isAddLeadModalOpen, setIsAddLeadModalOpen] = useState(false);
 
-  const totalDials = userPerformance?.totalDials || 0;
-  const totalBooked = userPerformance?.totalBooked || 0;
+  const totalBooked = userPerformance?.bookings || 0;
+  const wins = userPerformance?.wins || 0;
+  const powerScore = userPerformance?.power_score || 0;
+  const revenue = userPerformance?.revenue || 0;
 
   useEffect(() => {
     if (activeLead) {
@@ -68,10 +70,10 @@ export default function SetterDashboardContent() {
   };
 
   const stats = [
-    { label: "Target Market", value: (userPerformance?.totalLeads || 0).toLocaleString(), icon: <Target size={18} />, desc: "Total Pool" },
-    { label: "Dials Total", value: totalDials.toLocaleString(), icon: <PhoneCall size={18} />, desc: "Outreach" },
+    { label: "Target Market", value: (totalLeadsCount || 0).toLocaleString(), icon: <Target size={18} />, desc: "Total Pool" },
+    { label: "Power Score", value: powerScore, icon: <Activity size={18} />, desc: "Intel Score" },
     { label: "Demos Booked", value: totalBooked.toLocaleString(), icon: <Calendar size={18} />, desc: "Success" },
-    { label: "Win Opportunity", value: `$${(totalBooked * 6500).toLocaleString()}`, icon: <TrendingUp size={18} />, desc: "Projected" }
+    { label: "Rev Collected", value: `$${revenue.toLocaleString()}`, icon: <TrendingUp size={18} />, desc: "Total" }
   ];
 
   if (loading) return null;

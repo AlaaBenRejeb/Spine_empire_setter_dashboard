@@ -17,7 +17,7 @@ interface CRMContextType {
   assignedCloserName: string | null;
   leads: any[];
   totalLeadsCount: number;
-  userPerformance: SetterMetrics | null;
+  userPerformance: any | null;
   loading: boolean;
   user: any;
   userRole: string | null;
@@ -35,7 +35,7 @@ export function CRMProvider({ children }: { children: React.ReactNode }) {
   const [userRole, setUserRole] = useState<string | null>(null);
   const [assignedCloserId, setAssignedCloserId] = useState<string | null>(null);
   const [assignedCloserName, setAssignedCloserName] = useState<string | null>(null);
-  const [userPerformance, setUserPerformance] = useState<SetterMetrics | null>(null);
+  const [userPerformance, setUserPerformance] = useState<any | null>(null);
   const fetchedRef = useRef(false);
 
   const transformLead = (lead: any) => ({
@@ -177,13 +177,44 @@ export function CRMProvider({ children }: { children: React.ReactNode }) {
     };
   }, [user]);
 
-  // Update real-time performance metrics
+  // Update real-time performance metrics from Database "Intelligence Engine"
   useEffect(() => {
-    if (user?.id) {
-      const currentMetrics = calculateSetterMetrics(leads, leadNotes, user.id, 'all');
-      setUserPerformance(currentMetrics);
-    }
-  }, [leads, leadNotes, user?.id]);
+    if (!user?.id) return;
+
+    const fetchCurrentMetrics = async () => {
+      const { data } = await supabase
+        .from('performance_metrics')
+        .select('*')
+        .eq('profile_id', user.id)
+        .eq('role', 'setter')
+        .eq('period', 'current')
+        .maybeSingle();
+      
+      if (data) {
+        setUserPerformance(data);
+      }
+    };
+
+    fetchCurrentMetrics();
+
+    // Subscribe to real-time intelligence updates
+    const performanceChannel = supabase
+      .channel(`performance-${user.id}`)
+      .on('postgres_changes', { 
+        event: '*', 
+        schema: 'public', 
+        table: 'performance_metrics',
+        filter: `profile_id=eq.${user.id}`
+      }, (payload: any) => {
+        console.log("⚡ Intelligence Update:", payload.new);
+        setUserPerformance(payload.new);
+      })
+      .subscribe();
+
+    return () => {
+      supabase.removeChannel(performanceChannel);
+    };
+  }, [user?.id]);
 
 
   // 3. Real-time Flow Matrix Mapping Sync

@@ -8,7 +8,7 @@ export default function CallHistoryPage() {
   const { leads, leadNotes } = useCRM();
 
   const callLogs = Object.entries(leadNotes)
-    .filter(([_, notes]) => notes.status === "called" || notes.status === "booked")
+    .filter(([_, notes]) => ['called', 'booked', 'won', 'lost', 'noshow'].includes(notes.status))
     .map(([email, notes]) => {
       const lead = leads.find((l: any) => l.Email === email);
       return { ...lead, ...notes };

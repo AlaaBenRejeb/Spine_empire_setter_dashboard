@@ -3,24 +3,20 @@
 import { motion, AnimatePresence } from "framer-motion";
 import { BarChart3, TrendingUp, Target, Calendar, PhoneCall, ArrowUpRight, PieChart, Zap, Activity, Trophy, Clock } from "lucide-react";
 import { useCRM } from "@/context/CRMContext";
-import { useState, useMemo } from "react";
-import { calculateSetterMetrics } from "@/lib/performanceUtils";
+import { useState } from "react";
 
 type Timeframe = 'today' | 'month' | 'all';
 
 export default function PerformancePage() {
-  const { leads, leadNotes, user } = useCRM();
+  const { leads, leadNotes, user, userPerformance, totalLeadsCount } = useCRM();
   const [timeframe, setTimeframe] = useState<Timeframe>('all');
 
-  const metricsResults = useMemo(() => {
-    if (!user?.id) return null;
-    return calculateSetterMetrics(leads, leadNotes, user.id, timeframe);
-  }, [leads, leadNotes, user?.id, timeframe]);
+  if (!userPerformance) return null;
 
-  if (!metricsResults) return null;
-
-  const { totalDials, totalBooked, conversionRate, powerScore, totalLeads } = metricsResults;
+  const { bookings: totalBooked, win_rate: conversionRate, power_score: powerScore, revenue } = userPerformance;
   const DEAL_VALUE = 6500;
+  const totalLeads = totalLeadsCount || 0;
+  const totalDials = userPerformance.total_dials || totalLeads; 
   
   const totalIgnored = Object.values(leadNotes).filter((n: any) => 
     (n.setter_id === user?.id) && (n.status === "ignored" || n.status === "archived")

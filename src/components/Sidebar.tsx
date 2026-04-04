@@ -16,7 +16,6 @@ export default function Sidebar() {
     { name: "How to Succeed", href: "/onboarding", icon: Presentation },
     { name: "My Calls", href: "/calls", icon: PhoneCall },
     { name: "Performance", href: "/performance", icon: BarChart3 },
-    { name: "Bookings", href: "/bookings", icon: Calendar },
   ];
 
   return (
