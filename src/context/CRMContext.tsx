@@ -5,29 +5,16 @@ import { createClient } from "@/lib/supabase/client";
 
 const supabase = createClient();
 
-interface CRMContextType {
-  activeLead: any;
-  setActiveLead: (lead: any) => void;
-  leadNotes: Record<string, any>;
-  updateLeadNote: (email: string, updates: any) => void;
-  addLead: (lead: any) => Promise<void>;
-  assignedCloserName: string | null;
-  leads: any[];
-  totalLeadsCount: number;
-  loading: boolean;
-  user: any;
-  userRole: string | null;
-}
-
-const CRMContext = createContext<CRMContextType | undefined>(undefined);
+import { CRMProvider, useCRM } from "@/context/CRMContext";
+import { useAuth } from "@/context/AuthContext";
 
 export function CRMProvider({ children }: { children: React.ReactNode }) {
+  const { user, profile: authProfile } = useAuth();
   const [activeLead, setActiveLead] = useState<any>(null);
   const [leadNotes, setLeadNotes] = useState<Record<string, any>>({});
   const [leads, setLeads] = useState<any[]>([]);
   const [totalLeadsCount, setTotalLeadsCount] = useState(0);
   const [loading, setLoading] = useState(true);
-  const [user, setUser] = useState<any>(null);
   const [userRole, setUserRole] = useState<string | null>(null);
   const [assignedCloserId, setAssignedCloserId] = useState<string | null>(null);
   const [assignedCloserName, setAssignedCloserName] = useState<string | null>(null);
@@ -113,27 +100,13 @@ export function CRMProvider({ children }: { children: React.ReactNode }) {
       }
     };
 
-    // Fail-safe: Explicitly check session if onAuthStateChange is delayed
-    const syncSession = async () => {
-      const { data: { session } } = await supabase.auth.getSession();
-      if (session?.user && !fetchedRef.current) {
-        fetchedRef.current = true;
-        setUser(session.user);
-        fetchLeads(session.user);
-      }
-    };
-    syncSession();
-
-    // Subscribe to auth state — fires with INITIAL_SESSION on load, no competing getSession()
-    const { data: { subscription } } = supabase.auth.onAuthStateChange((_event: any, session: any) => {
-      if (session?.user && !fetchedRef.current) {
-        fetchedRef.current = true;
-        setUser(session.user);
-        fetchLeads(session.user);
-      } else if (!session?.user) {
-        setLoading(false);
-      }
-    });
+    if (user && !fetchedRef.current) {
+      fetchedRef.current = true;
+      fetchLeads(user);
+    } else if (!user) {
+      setLoading(false);
+      fetchedRef.current = false; // Reset if they log out
+    }
 
     // 2. Real-time Lead Sync
     const channel = supabase
