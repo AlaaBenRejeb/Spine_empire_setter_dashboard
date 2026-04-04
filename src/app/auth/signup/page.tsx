@@ -13,7 +13,7 @@ export default function SignupPage() {
   const inviteEmail = searchParams.get("email")
   const inviteRole = searchParams.get("role")
 
-  const [email, setEmail] = useState(inviteEmail || "")
+  const [email, setEmail] = useState((inviteEmail && inviteEmail !== 'null') ? inviteEmail : "")
   const [password, setPassword] = useState("")
   const [confirmPassword, setConfirmPassword] = useState("")
   const [firstName, setFirstName] = useState("")
@@ -23,11 +23,14 @@ export default function SignupPage() {
   const [success, setSuccess] = useState(false)
   const [supabase] = useState(() => createClient())
 
+  const isEmailPredefined = !!(inviteEmail && inviteEmail !== 'null' && inviteEmail !== "");
+
   useEffect(() => {
     if (!token) {
       router.push('/')
     }
   }, [token, router])
+
 
   const handleSignup = async (e: React.FormEvent) => {
     e.preventDefault()
@@ -170,11 +173,13 @@ export default function SignupPage() {
               <input 
                 type="email" 
                 placeholder="NEXUS IDENTITY (EMAIL)" 
-                disabled
+                disabled={isEmailPredefined}
                 value={email}
+                onChange={(e) => setEmail(e.target.value)}
                 className="w-full bg-black/40 border border-white/5 rounded-2xl py-6 pl-16 pr-8 text-[12px] font-black tracking-widest uppercase focus:border-white focus:bg-white/10 outline-none transition-all placeholder:text-white/20 text-white"
               />
             </div>
+
 
             <div className="relative group">
               <Lock className="absolute left-6 top-1/2 -translate-y-1/2 text-white/20 group-focus-within:text-white transition-colors" size={18} />
