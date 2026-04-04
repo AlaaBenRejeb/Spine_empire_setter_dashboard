@@ -76,12 +76,6 @@ export function AuthProvider({
   };
 
   useEffect(() => {
-    // Fail-safe: Force resolve loading after 5 seconds to prevent infinite "Syncing" hang
-    const loadingTimeout = setTimeout(() => {
-      setLoading(false);
-      console.warn("Auth synchronization timeout: Forcing interface load.");
-    }, 15000);
-
     const initAuth = async () => {
       try {
         const { data: { session } } = await supabase.auth.getSession();
@@ -97,22 +91,17 @@ export function AuthProvider({
             setProfile(profileData);
             checkPortalAccess(profileData);
           } else {
-            const { data: profile } = await supabase
-              .from('profiles')
-              .select('*')
-              .eq('id', session.user.id)
-              .single();
-            setProfile(profile);
-            checkPortalAccess(profile);
+            console.log("No profile detected - triggering onboarding.");
+            setProfile(null);
           }
         } else {
-          setLoading(false); // No session
+          setUser(null);
+          setProfile(null);
         }
       } catch (error: any) {
         console.error("Critical Auth Sync Failure:", error);
       } finally {
         setLoading(false);
-        clearTimeout(loadingTimeout);
       }
     };
 
@@ -142,15 +131,13 @@ export function AuthProvider({
         console.error("Auth state update error:", error);
       } finally {
         setLoading(false);
-        clearTimeout(loadingTimeout);
       }
     });
 
     return () => {
       subscription.unsubscribe();
-      clearTimeout(loadingTimeout);
     };
-  }, [supabase.auth]);
+  }, [supabase]); // Run once on mount (or when supabase client changes)
 
   // Handle Public Routes (Join / Signup)
   // Handle Public Routes (Join / Signup)
