@@ -4,6 +4,7 @@ import { motion, AnimatePresence } from "framer-motion";
 import { Briefcase, MoreHorizontal, ChevronRight, Filter, Search, Plus, Target, Star, MapPin, Zap, User, Mail, MessageSquare, DollarSign, Phone, ArrowLeftRight, CheckCircle2 } from "lucide-react";
 import { useCRM } from "@/context/CRMContext";
 import FollowUpModal from "@/components/FollowUpModal";
+import { useRouter } from "next/navigation";
 import { useState } from "react";
 
 const COLUMNS = [
@@ -15,6 +16,7 @@ const COLUMNS = [
 
 export default function DealsPage() {
   const { leads, leadNotes, setActiveLead, updateLeadNote } = useCRM();
+  const router = useRouter();
   const [selectedLead, setSelectedLead] = useState<any>(null);
   const [isFollowUpOpen, setIsFollowUpOpen] = useState(false);
   const [followUpTab, setFollowUpTab] = useState<"email" | "sms">("email");
@@ -85,8 +87,11 @@ export default function DealsPage() {
                        initial={{ opacity: 0, scale: 0.9, y: 30 }}
                        animate={{ opacity: 1, scale: 1, y: 0 }}
                        transition={{ delay: idx * 0.04 + colIdx * 0.1, duration: 0.6, ease: [0.16, 1, 0.3, 1] }}
-                       onClick={() => setActiveLead(lead)}
-                       className="glass-card p-0 overflow-hidden cursor-pointer group relative hover:z-50"
+                       onClick={() => {
+                          setActiveLead(lead);
+                          router.push("/");
+                        }}
+                       className="glass-card p-0 overflow-hidden cursor-pointer group relative hover:z-50 flex-shrink-0"
                      >
                        <div className="flex flex-col">
                          {/* Card Tech Top bar */}
