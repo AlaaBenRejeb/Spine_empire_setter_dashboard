@@ -4,6 +4,7 @@ import { motion, AnimatePresence } from "framer-motion";
 import { BarChart3, TrendingUp, Target, Calendar, PhoneCall, ArrowUpRight, PieChart, Zap, Activity, Trophy, Clock } from "lucide-react";
 import { useCRM } from "@/context/CRMContext";
 import { useState, useMemo } from "react";
+import { calculateSetterMetrics } from "@/lib/performanceUtils";
 
 type Timeframe = 'today' | 'month' | 'all';
 
@@ -11,38 +12,19 @@ export default function PerformancePage() {
   const { leads, leadNotes, user } = useCRM();
   const [timeframe, setTimeframe] = useState<Timeframe>('all');
 
-  const filteredNotes = useMemo(() => {
-    const now = new Date();
-    const today = now.toISOString().split('T')[0];
-    const allNotes = Object.values(leadNotes);
-    
-    if (timeframe === 'today') {
-      return allNotes.filter((n: any) => {
-        if (!n.synced_at || !user?.id) return false;
-        return n.synced_at.startsWith(today) && n.setter_id === user.id;
-      });
-    } else if (timeframe === 'month') {
-      return allNotes.filter((n: any) => {
-        if (!n.synced_at || !user?.id) return false;
-        const d = new Date(n.synced_at);
-        const inMonth = d.getMonth() === now.getMonth() && d.getFullYear() === now.getFullYear();
-        const isCurrentUser = n.setter_id === user.id;
-        return inMonth && isCurrentUser;
-      });
-    }
-    return allNotes;
-  }, [leadNotes, timeframe, user?.id]);
+  const metricsResults = useMemo(() => {
+    if (!user?.id) return null;
+    return calculateSetterMetrics(leads, leadNotes, user.id, timeframe);
+  }, [leads, leadNotes, user?.id, timeframe]);
 
-  const totalDials = filteredNotes.filter((s: any) => s.status !== "new").length;
-  const totalBooked = filteredNotes.filter((s: any) => s.status === "booked").length;
-  const totalIgnored = filteredNotes.filter((s: any) => s.status === "ignored" || s.status === "archived").length;
-  const totalLeads = leads.length;
+  if (!metricsResults) return null;
 
-  const conversionRate = totalDials > 0 ? (totalBooked / totalDials) * 100 : 0;
+  const { totalDials, totalBooked, conversionRate, powerScore, totalLeads } = metricsResults;
   const DEAL_VALUE = 6500;
-
-  // Power Score = (ConvRate * 0.7) + (Bookings/10 * 30) - capped at 100
-  const powerScore = Math.min(Math.round((conversionRate * 0.7) + (Math.min(totalBooked, 10) * 3)), 100);
+  
+  const totalIgnored = Object.values(leadNotes).filter((n: any) => 
+    (n.setter_id === user?.id) && (n.status === "ignored" || n.status === "archived")
+  ).length;
 
   const metrics = [
     { label: "Elite Target Pool", value: totalLeads.toLocaleString(), icon: <Target className="text-primary" />, desc: "Total database nodes", trend: "Live" },

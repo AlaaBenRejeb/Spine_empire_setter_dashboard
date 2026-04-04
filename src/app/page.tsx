@@ -41,26 +41,15 @@ function formatTime12Hour(time24: string) {
 }
 
 export default function SetterDashboardContent() {
-  const { activeLead, setActiveLead, leadNotes, updateLeadNote, assignedCloserName, leads, totalLeadsCount, user } = useCRM();
+  const { activeLead, setActiveLead, leadNotes, updateLeadNote, assignedCloserName, leads, totalLeadsCount, user, userPerformance } = useCRM();
   const { loading } = useAuth();
   const [noteText, setNoteText] = useState("");
   const [scheduledDate, setScheduledDate] = useState(new Date().toISOString().split('T')[0]);
   const [scheduledTime, setScheduledTime] = useState("09:00");
   const [isAddLeadModalOpen, setIsAddLeadModalOpen] = useState(false);
 
-  const totalLeads = totalLeadsCount;
-  const today = new Date().toISOString().split('T')[0];
-  const notes = Object.values(leadNotes);
-  
-  const todayStats = notes.filter((n: any) => {
-    if (!n.synced_at || !user?.id) return false;
-    const isToday = n.synced_at.startsWith(today);
-    const isCurrentUser = n.setter_id === user.id;
-    return isToday && isCurrentUser;
-  });
-
-  const totalDials = todayStats.filter(n => (n as any).status !== "new" && (n as any).status !== "ignored").length;
-  const totalBooked = todayStats.filter(n => (n as any).status === "booked").length;
+  const totalDials = userPerformance?.totalDials || 0;
+  const totalBooked = userPerformance?.totalBooked || 0;
 
   useEffect(() => {
     if (activeLead) {
@@ -79,8 +68,8 @@ export default function SetterDashboardContent() {
   };
 
   const stats = [
-    { label: "Target Market", value: totalLeads.toLocaleString(), icon: <Target size={18} />, desc: "Total Pool" },
-    { label: "Dials Today", value: totalDials.toLocaleString(), icon: <PhoneCall size={18} />, desc: "Outreach" },
+    { label: "Target Market", value: (userPerformance?.totalLeads || 0).toLocaleString(), icon: <Target size={18} />, desc: "Total Pool" },
+    { label: "Dials Total", value: totalDials.toLocaleString(), icon: <PhoneCall size={18} />, desc: "Outreach" },
     { label: "Demos Booked", value: totalBooked.toLocaleString(), icon: <Calendar size={18} />, desc: "Success" },
     { label: "Win Opportunity", value: `$${(totalBooked * 6500).toLocaleString()}`, icon: <TrendingUp size={18} />, desc: "Projected" }
   ];

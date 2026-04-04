@@ -76,75 +76,92 @@ export function AuthProvider({
   };
 
   useEffect(() => {
-    const initAuth = async () => {
-      try {
-        const { data: { session } } = await supabase.auth.getSession();
-        if (session?.user) {
-          setUser(session.user);
-          const { data: profileData } = await supabase
-            .from('profiles')
-            .select('*')
-            .eq('id', session.user.id)
-            .maybeSingle();
-          
-          if (profileData) {
-            setProfile(profileData);
-            checkPortalAccess(profileData);
-          } else {
-            console.log("No profile detected - triggering onboarding.");
-            setProfile(null);
-          }
-        } else {
-          setUser(null);
-          setProfile(null);
-        }
-      } catch (error: any) {
-        console.error("Critical Auth Sync Failure:", error);
-      } finally {
+    // 1. Instrumentation: Tracking Initialization Life-cycle
+    const timerId = `AuthSync-${Math.random().toString(36).slice(2, 6)}`;
+    console.time(timerId);
+    console.log(`[${timerId}] 🚀 Auth Synchronization Initiated.`);
+
+    let isMounted = true;
+    let syncCompleted = false;
+
+    const completeSync = () => {
+      if (!syncCompleted) {
+        syncCompleted = true;
         setLoading(false);
+        console.timeEnd(timerId);
       }
     };
 
-    initAuth();
+    const syncProfile = async (session: any) => {
+      if (!session?.user) {
+        setUser(null);
+        setProfile(null);
+        completeSync();
+        return;
+      }
 
-    const { data: { subscription } } = supabase.auth.onAuthStateChange(async (event: any, session: any) => {
       try {
-        if (session?.user) {
-          setUser(session.user);
-          const { data: profileData } = await supabase
-            .from('profiles')
-            .select('*')
-            .eq('id', session.user.id)
-            .maybeSingle();
-          
-          if (profileData) {
-            setProfile(profileData);
-            checkPortalAccess(profileData);
-          } else {
-            setProfile(null);
-          }
+        console.log(`[${timerId}] 🔍 Fetching Profile for Identity: ${session.user.id}`);
+        setUser(session.user);
+        
+        const { data: profileData, error } = await supabase
+          .from('profiles')
+          .select('*')
+          .eq('id', session.user.id)
+          .maybeSingle();
+        
+        if (!isMounted) return;
+
+        if (error) {
+          console.error(`[${timerId}] ❌ Profile Fetch Error:`, error);
+        }
+
+        if (profileData) {
+          console.log(`[${timerId}] ✅ Profile Locked:`, profileData.role);
+          setProfile(profileData);
+          checkPortalAccess(profileData);
         } else {
-          setUser(null);
+          console.warn(`[${timerId}] ⚠️ No Profile Detected: Onboarding required.`);
           setProfile(null);
         }
-      } catch (error: any) {
-        console.error("Auth state update error:", error);
+      } catch (err) {
+        console.error(`[${timerId}] 🧨 Critical Error during Sync:`, err);
       } finally {
-        setLoading(false);
+        completeSync();
       }
+    };
+
+    // Unified Initialization: Handle both initial state and subsequent changes
+    const runInit = async () => {
+      console.log(`[${timerId}] 🛠️ Checking existing session...`);
+      const { data: { session } } = await supabase.auth.getSession();
+      if (isMounted) await syncProfile(session);
+    };
+
+    runInit();
+
+    const { data: { subscription } } = supabase.auth.onAuthStateChange(async (event: string, session: any) => {
+      console.log(`[${timerId}] ⚡ Auth Event Detected: ${event}`);
+      if (isMounted) await syncProfile(session);
     });
 
     return () => {
+      isMounted = false;
       subscription.unsubscribe();
     };
-  }, [supabase]); // Run once on mount (or when supabase client changes)
+  }, [supabase]);
 
-  // Handle Public Routes (Join / Signup)
-  // Handle Public Routes (Join / Signup)
-  const isPublicRoute = typeof window !== 'undefined' && (
-    window.location.pathname.startsWith('/join') || 
-    window.location.pathname.startsWith('/auth/signup')
-  );
+  // Strategic Failsafe: Infinite Sync Protection (Shortened to 20s for better DX)
+  useEffect(() => {
+    if (!loading) return;
+    const failsafe = setTimeout(() => {
+      if (loading) {
+        console.warn("⚠️ Auth Synchronization Timeout: Engaging Fail-safe protocols.");
+        setLoading(false);
+      }
+    }, 20000); // 20 Second Strategic Window (Reduced from 60s)
+    return () => clearTimeout(failsafe);
+  }, [loading]);
 
   const signOut = async () => {
     await supabase.auth.signOut();
@@ -153,17 +170,11 @@ export function AuthProvider({
   // Determine if onboarding is needed (More robust check)
   const needsOnboarding = user && !isSuperadmin && profile !== undefined && (profile === null || !profile.first_name || !profile.last_name || !profile.city);
 
-  // --- Strategic Failsafe: Infinite Sync Protection ---
-  useEffect(() => {
-    if (!loading) return;
-    const failsafe = setTimeout(() => {
-      if (loading) {
-        console.warn("Auth Synchronization Timeout: Engaging Fail-safe protocols.");
-        setLoading(false);
-      }
-    }, 60000); // 60 Second Strategic Window
-    return () => clearTimeout(failsafe);
-  }, [loading]);
+  // Handle Public Routes (Join / Signup)
+  const isPublicRoute = typeof window !== 'undefined' && (
+    window.location.pathname.startsWith('/join') || 
+    window.location.pathname.startsWith('/auth/signup')
+  );
 
   const [statusIndex, setStatusIndex] = useState(0);
   const STATUS_MESSAGES = [

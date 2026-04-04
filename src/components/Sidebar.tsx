@@ -13,7 +13,7 @@ export default function Sidebar() {
   const menuItems = [
     { name: "Dashboard", href: "/", icon: LayoutDashboard },
     { name: "Deals Pipeline", href: "/deals", icon: Briefcase },
-    { name: "Onboarding", href: "/onboarding", icon: Presentation },
+    { name: "How to Succeed", href: "/onboarding", icon: Presentation },
     { name: "My Calls", href: "/calls", icon: PhoneCall },
     { name: "Performance", href: "/performance", icon: BarChart3 },
     { name: "Bookings", href: "/bookings", icon: Calendar },

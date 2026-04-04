@@ -6,6 +6,7 @@ import { createClient } from "@/lib/supabase/client";
 const supabase = createClient();
 
 import { useAuth } from "@/context/AuthContext";
+import { calculateSetterMetrics, SetterMetrics } from "@/lib/performanceUtils";
 
 interface CRMContextType {
   activeLead: any;
@@ -16,6 +17,7 @@ interface CRMContextType {
   assignedCloserName: string | null;
   leads: any[];
   totalLeadsCount: number;
+  userPerformance: SetterMetrics | null;
   loading: boolean;
   user: any;
   userRole: string | null;
@@ -33,6 +35,7 @@ export function CRMProvider({ children }: { children: React.ReactNode }) {
   const [userRole, setUserRole] = useState<string | null>(null);
   const [assignedCloserId, setAssignedCloserId] = useState<string | null>(null);
   const [assignedCloserName, setAssignedCloserName] = useState<string | null>(null);
+  const [userPerformance, setUserPerformance] = useState<SetterMetrics | null>(null);
   const fetchedRef = useRef(false);
 
   const transformLead = (lead: any) => ({
@@ -172,7 +175,16 @@ export function CRMProvider({ children }: { children: React.ReactNode }) {
     return () => {
       supabase.removeChannel(channel);
     };
-  }, []);
+  }, [user]);
+
+  // Update real-time performance metrics
+  useEffect(() => {
+    if (user?.id) {
+      const currentMetrics = calculateSetterMetrics(leads, leadNotes, user.id, 'all');
+      setUserPerformance(currentMetrics);
+    }
+  }, [leads, leadNotes, user?.id]);
+
 
   // 3. Real-time Flow Matrix Mapping Sync
   useEffect(() => {
@@ -335,7 +347,7 @@ export function CRMProvider({ children }: { children: React.ReactNode }) {
   };
 
   return (
-    <CRMContext.Provider value={{ activeLead, setActiveLead, leadNotes, updateLeadNote, addLead, leads, totalLeadsCount, loading, user, userRole, assignedCloserName }}>
+    <CRMContext.Provider value={{ activeLead, setActiveLead, leadNotes, updateLeadNote, addLead, leads, totalLeadsCount, userPerformance, loading, user, userRole, assignedCloserName }}>
       {children}
     </CRMContext.Provider>
   );
