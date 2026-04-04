@@ -76,8 +76,15 @@ export function CRMProvider({ children }: { children: React.ReactNode }) {
           .select('*', { count: 'exact' });
 
         if (error) {
-          console.error('❌ Leads fetch failed:', error.message, error.code);
-        } else if (dbLeads) {
+          console.error('❌ Leads fetch failed:', error.message, error.code, error.details);
+        } else {
+          console.log(`✅ Leads Sync: Fetched ${dbLeads?.length || 0} leads (Total Pool: ${count})`);
+          if (dbLeads && dbLeads.length === 0) {
+            console.warn("⚠️ Database returned 0 leads. Check RLS policies or if table is empty.");
+          }
+        }
+
+        if (dbLeads) {
           if (count !== null) setTotalLeadsCount(count);
           const syncedNotes: Record<string, any> = {};
           const syncedLeads: any[] = dbLeads.map((lead: any) => ({
