@@ -81,7 +81,7 @@ export function CRMProvider({ children }: { children: React.ReactNode }) {
 
         if (!error && dbLeads && dbLeads.length > 0) {
           const syncedNotes: Record<string, any> = {};
-          const syncedLeads: any[] = dbLeads.map(lead => ({
+          const syncedLeads: any[] = dbLeads.map((lead: any) => ({
             id: lead.id,
             "Practice Name": lead.business_name,
             "First Name": lead.contact_name?.split(' ')[0] || "Owner",
@@ -96,7 +96,7 @@ export function CRMProvider({ children }: { children: React.ReactNode }) {
             DealValue: lead.metadata?.deal_value || 6500,
           }));
 
-          dbLeads.forEach(lead => {
+          dbLeads.forEach((lead: any) => {
             const key = lead.metadata?.email || lead.id;
             syncedNotes[key] = { 
               id: lead.id,
@@ -137,7 +137,7 @@ export function CRMProvider({ children }: { children: React.ReactNode }) {
     // 2. Real-time Lead Sync
     const channel = supabase
       .channel('leads-setter-sync')
-      .on('postgres_changes', { event: '*', schema: 'public', table: 'leads' }, (payload) => {
+      .on('postgres_changes', { event: '*', schema: 'public', table: 'leads' }, (payload: any) => {
         const updated = (payload.eventType === 'DELETE' ? payload.old : payload.new) as any;
         
         if (payload.eventType === 'DELETE') {
