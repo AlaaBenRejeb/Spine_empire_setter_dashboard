@@ -5,6 +5,56 @@ import { Zap, Shield, ChevronRight, User, Target, Crosshair, Trophy, Building2, 
 import { useState } from "react";
 import { createClient } from "@/lib/supabase/client";
 
+const SETTER_CURRICULUM = [
+  {
+    phase: "Foundation",
+    days: "1-2",
+    title: "The Script & Mission",
+    description: "Understand the Spine Empire offer and memorize the cold call engine.",
+    details: [
+      "The 4-Part System: Offer, Acquisition, Conversion, Ascension",
+      "Chiropractor Pain Points: Over-reliance on referrals",
+      "Opener Excellence: Owner vs. Gatekeeper strategy",
+      "Objection Bank: Handling 'Not Interested' and 'Busy'"
+    ]
+  },
+  {
+    phase: "Delivery",
+    days: "3-5",
+    title: "Controlled Reps",
+    description: "Turn memorization into delivery. Perfect your tone, pacing, and control.",
+    details: [
+      "Tone & Pacing: Sound like a peer, not a solicitor",
+      "Objection Looping: Never stop at the first 'No'",
+      "Roleplay standards: Rehearsing until second nature",
+      "The Booking Test: Calendar in under 4 minutes"
+    ]
+  },
+  {
+    phase: "Live",
+    days: "6-10",
+    title: "Supervised Volume",
+    description: "Create real conversations. Speed over perfection. Control the frame.",
+    details: [
+      "Daily Target: 50–100 dials to drive momentum",
+      "Conversation Rate: 10+ real talks daily",
+      "Game Tape Review: Self-critique every call",
+      "CRM Logging: If it isn't in the CRM, it didn't happen"
+    ]
+  },
+  {
+    phase: "Mastery",
+    days: "11-14",
+    title: "Consistency Standard",
+    description: "Prove you can sustain performance. Feed the closers daily.",
+    details: [
+      "Show Rate Mastery: How to confirm calls effectively",
+      "Booking Quality: Never book garbage to hit a quota",
+      "Graduation: Sustaining targets for 5 consecutive days"
+    ]
+  }
+];
+
 export default function OnboardingPage({ user, onComplete }: { user: any, onComplete: () => void }) {
   const [supabase] = useState(() => createClient());
 
@@ -67,7 +117,8 @@ export default function OnboardingPage({ user, onComplete }: { user: any, onComp
                 { s: 1, label: "Identity Node", icon: UserCircle },
                 { s: 2, label: "Eco-Location", icon: MapPin },
                 { s: 3, label: "Logic Lock", icon: Shield },
-                { s: 4, label: "Setter Sync", icon: Zap }
+                { s: 4, label: "Setter Sync", icon: Zap },
+                { s: 5, label: "Certification", icon: Trophy }
               ].map((item) => (
                 <div key={item.s} className={`flex items-center gap-4 transition-all duration-500 ${step >= item.s ? 'text-white' : 'text-white/10'}`}>
                    <div className={`w-12 h-12 rounded-2xl flex items-center justify-center border-2 transition-all duration-500 ${step === item.s ? 'bg-white text-black border-white shadow-[0_0_20px_rgba(255,255,255,0.1)]' : step > item.s ? 'bg-emerald-500/10 border-emerald-500 text-emerald-500' : 'bg-transparent border-white/5'}`}>
@@ -212,13 +263,56 @@ export default function OnboardingPage({ user, onComplete }: { user: any, onComp
                 </div>
 
                 <button 
-                  onClick={handleFinish}
+                  onClick={() => setStep(5)}
                   disabled={loading}
                   className="w-full bg-white text-black py-6 mt-6 rounded-[2rem] font-black text-[14px] uppercase tracking-[0.4em] flex items-center justify-center gap-4 hover:shadow-[0_0_60px_rgba(255,255,255,0.3)] active:scale-95 transition-all group disabled:opacity-30"
                 >
-                  {loading ? "Initializing..." : "Finalize Deployment"}
+                  Proceed to Certification <ChevronRight size={18} strokeWidth={3} className="group-hover:translate-x-2 transition-transform" />
                 </button>
                 <p className="text-[8px] font-black tracking-[0.6em] text-white/5 uppercase mt-4 italic">Lead Hub V1.0 • ID: {user.id.slice(0,8)}</p>
+             </motion.div>
+           )}
+
+           {step === 5 && (
+             <motion.div 
+               initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }}
+               className="flex flex-col gap-10"
+             >
+                <div className="flex flex-col gap-2">
+                   <h2 className="text-5xl font-heading font-black uppercase italic tracking-tighter leading-none text-white">Certification.</h2>
+                   <p className="text-[10px] font-black uppercase tracking-widest text-white/30 italic">Review the Setter curriculum before terminal launch</p>
+                </div>
+
+                <div className="flex flex-col gap-4 max-h-[400px] overflow-y-auto pr-4 hide-scrollbar custom-scrollbar">
+                   {SETTER_CURRICULUM.map((phase, idx) => (
+                     <div key={idx} className="p-6 bg-white/5 border border-white/10 rounded-3xl flex flex-col gap-4 group hover:bg-white/10 transition-all">
+                        <div className="flex justify-between items-center">
+                           <span className="text-[10px] font-black uppercase tracking-widest text-emerald-500 italic">Days {phase.days}</span>
+                           <span className="text-[8px] font-black uppercase tracking-[0.3em] opacity-20">{phase.phase}</span>
+                        </div>
+                        <h3 className="text-xl font-heading font-black uppercase italic tracking-tighter text-white">{phase.title}</h3>
+                        <div className="grid grid-cols-2 gap-2">
+                           {phase.details.slice(0, 2).map((d, i) => (
+                             <div key={i} className="flex items-center gap-2 text-[8px] font-bold text-white/40 uppercase tracking-wider">
+                                <div className="w-1 h-1 rounded-full bg-emerald-500" /> {d}
+                             </div>
+                           ))}
+                        </div>
+                     </div>
+                   ))}
+                </div>
+
+                <div className="flex flex-col gap-4">
+                  <button 
+                    onClick={handleFinish}
+                    disabled={loading}
+                    className="w-full bg-emerald-500 text-black py-8 rounded-[2.5rem] font-black text-[16px] uppercase tracking-[0.4em] flex items-center justify-center gap-4 hover:shadow-[0_0_80px_rgba(16,185,129,0.3)] active:scale-95 transition-all group disabled:opacity-30"
+                  >
+                    {loading ? "Launching Node..." : "Certify & Launch Terminal"}
+                    <Zap size={24} strokeWidth={3} className="fill-current" />
+                  </button>
+                  <button onClick={() => setStep(4)} className="text-[10px] font-black uppercase tracking-[0.3em] text-white/20 hover:text-white transition-all text-center italic">Review Deployment Sync</button>
+                </div>
              </motion.div>
            )}
         </div>

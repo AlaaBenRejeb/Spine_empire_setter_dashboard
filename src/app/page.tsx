@@ -41,14 +41,14 @@ function formatTime12Hour(time24: string) {
 }
 
 export default function SetterDashboardContent() {
-  const { activeLead, setActiveLead, leadNotes, updateLeadNote, assignedCloserName, leads } = useCRM();
+  const { activeLead, setActiveLead, leadNotes, updateLeadNote, assignedCloserName, leads, totalLeadsCount } = useCRM();
   const { loading } = useAuth();
   const [noteText, setNoteText] = useState("");
   const [scheduledDate, setScheduledDate] = useState(new Date().toISOString().split('T')[0]);
   const [scheduledTime, setScheduledTime] = useState("09:00");
   const [isAddLeadModalOpen, setIsAddLeadModalOpen] = useState(false);
 
-  const totalLeads = leads.length;
+  const totalLeads = totalLeadsCount;
   const notes = Object.values(leadNotes);
   const totalDials = notes.filter(n => (n as any).status !== "new").length;
   const totalBooked = notes.filter(n => (n as any).status === "booked").length;

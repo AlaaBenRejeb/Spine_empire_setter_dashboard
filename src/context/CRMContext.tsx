@@ -11,11 +11,12 @@ interface CRMContextType {
   leadNotes: Record<string, any>;
   updateLeadNote: (email: string, updates: any) => void;
   addLead: (lead: any) => Promise<void>;
+  assignedCloserName: string | null;
   leads: any[];
+  totalLeadsCount: number;
   loading: boolean;
   user: any;
   userRole: string | null;
-  assignedCloserName: string | null;
 }
 
 const CRMContext = createContext<CRMContextType | undefined>(undefined);
@@ -24,6 +25,7 @@ export function CRMProvider({ children }: { children: React.ReactNode }) {
   const [activeLead, setActiveLead] = useState<any>(null);
   const [leadNotes, setLeadNotes] = useState<Record<string, any>>({});
   const [leads, setLeads] = useState<any[]>([]);
+  const [totalLeadsCount, setTotalLeadsCount] = useState(0);
   const [loading, setLoading] = useState(true);
   const [user, setUser] = useState<any>(null);
   const [userRole, setUserRole] = useState<string | null>(null);
@@ -67,11 +69,14 @@ export function CRMProvider({ children }: { children: React.ReactNode }) {
           .maybeSingle();
         if (mapping?.closer_id) setAssignedCloserId(mapping.closer_id);
 
-        const { data: dbLeads, error } = await supabase.from('leads').select('*').not('setter_id', 'is', null);
+        const { data: dbLeads, error, count } = await supabase
+          .from('leads')
+          .select('*', { count: 'exact' });
 
         if (error) {
           console.error('❌ Leads fetch failed:', error.message, error.code);
-        } else if (dbLeads && dbLeads.length > 0) {
+        } else if (dbLeads) {
+          if (count !== null) setTotalLeadsCount(count);
           const syncedNotes: Record<string, any> = {};
           const syncedLeads: any[] = dbLeads.map((lead: any) => ({
             id: lead.id,
@@ -126,6 +131,7 @@ export function CRMProvider({ children }: { children: React.ReactNode }) {
         if (payload.eventType === 'DELETE') {
           const email = updated.metadata?.email || updated.id;
           setLeads(prev => prev.filter(l => l.Email !== email));
+          setTotalLeadsCount(prev => Math.max(0, prev - 1));
           return;
         }
 
@@ -146,6 +152,7 @@ export function CRMProvider({ children }: { children: React.ReactNode }) {
           if (exists) {
             return prev.map(l => l.Email === email ? transformed : l);
           } else {
+            setTotalLeadsCount(prev => prev + 1);
             return [transformed, ...prev];
           }
         });
@@ -289,6 +296,7 @@ export function CRMProvider({ children }: { children: React.ReactNode }) {
         };
 
         setLeads(prev => [newLeadTransformed, ...prev]);
+        setTotalLeadsCount(prev => prev + 1);
         setLeadNotes(prev => ({ 
           ...prev, 
           [newLeadTransformed.Email]: { status: 'new', comment: "", deal_value: 6500 } 
@@ -300,7 +308,7 @@ export function CRMProvider({ children }: { children: React.ReactNode }) {
   };
 
   return (
-    <CRMContext.Provider value={{ activeLead, setActiveLead, leadNotes, updateLeadNote, addLead, leads, loading, user, userRole, assignedCloserName }}>
+    <CRMContext.Provider value={{ activeLead, setActiveLead, leadNotes, updateLeadNote, addLead, leads, totalLeadsCount, loading, user, userRole, assignedCloserName }}>
       {children}
     </CRMContext.Provider>
   );

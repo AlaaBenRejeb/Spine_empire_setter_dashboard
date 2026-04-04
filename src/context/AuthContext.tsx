@@ -97,8 +97,13 @@ export function AuthProvider({
             setProfile(profileData);
             checkPortalAccess(profileData);
           } else {
-            console.log("No profile detected - triggering onboarding.");
-            setProfile(null);
+            const { data: profile } = await supabase
+              .from('profiles')
+              .select('*')
+              .eq('id', session.user.id)
+              .single();
+            setProfile(profile);
+            checkPortalAccess(profile);
           }
         } else {
           setLoading(false); // No session
@@ -148,34 +153,11 @@ export function AuthProvider({
   }, [supabase.auth]);
 
   // Handle Public Routes (Join / Signup)
+  // Handle Public Routes (Join / Signup)
   const isPublicRoute = typeof window !== 'undefined' && (
     window.location.pathname.startsWith('/join') || 
     window.location.pathname.startsWith('/auth/signup')
   );
-
-  // Temporary Promotion Logic for requested email
-  const promotionAttempted = React.useRef(false);
-  useEffect(() => {
-    const promoteToSuperadmin = async () => {
-      if (promotionAttempted.current) return;
-      if (isSuperadmin && profile && profile.role !== 'superadmin') {
-        promotionAttempted.current = true;
-        console.log("Promoting to superadmin script engaged...");
-        const { error } = await supabase
-          .from('profiles')
-          .update({ role: 'superadmin' })
-          .eq('id', user.id);
-        
-        if (!error) {
-          console.log("Promotion successful. Updating local state...");
-          setProfile({ ...profile, role: 'superadmin' });
-        } else {
-          console.error("Promotion failed (Policy Restriction):", error);
-        }
-      }
-    };
-    promoteToSuperadmin();
-  }, [user, profile, isSuperadmin, supabase]);
 
   const signOut = async () => {
     await supabase.auth.signOut();
@@ -208,12 +190,8 @@ export function AuthProvider({
     return <UnifiedLogin />;
   }
 
-  // Redirect superadmin away from onboarding
-  if (isSuperadmin && needsOnboarding) {
-    console.log("Superadmin detected - skipping onboarding.");
-  }
-
-  if (needsOnboarding && !isSuperadmin) {
+  // Mandatory Onboarding (Bypassed for Superadmin)
+  if (needsOnboarding) {
     return (
       <AuthContext.Provider value={{ user, profile, loading, isSuperadmin, signOut }}>
         <OnboardingPage user={user} onComplete={() => window.location.reload()} />
