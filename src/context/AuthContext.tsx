@@ -34,6 +34,7 @@ export function AuthProvider({
   const [user, setUser] = useState<any>(null);
   const [profile, setProfile] = useState<any>(undefined);
   const [loading, setLoading] = useState(true);
+  const syncLockRef = React.useRef<string | null>(null);
 
   // Absolute master bypass for owner (Case-insensitive + Database Role)
   const isSuperadmin = 
@@ -92,22 +93,32 @@ export function AuthProvider({
       }
     };
 
-    const syncProfile = async (session: any) => {
-      if (!session?.user) {
+    const syncProfile = async (session: any, source: string) => {
+      const userId = session?.user?.id;
+      
+      if (!userId) {
         setUser(null);
         setProfile(null);
         completeSync();
         return;
       }
 
+      // 🔐 GATEKEEPER: Prevent parallel syncs for the same identity
+      if (syncLockRef.current === userId) {
+        console.log(`[${timerId}] 🛡️ Sync Lock active for ${userId} (Source: ${source}). Skipping redundant fetch.`);
+        return;
+      }
+      
+      syncLockRef.current = userId;
+
       try {
-        console.log(`[${timerId}] 🔍 Fetching Profile for Identity: ${session.user.id}`);
+        console.log(`[${timerId}] 🔍 Fetching Profile for Identity: ${userId} (Source: ${source})`);
         setUser(session.user);
         
         const { data: profileData, error } = await supabase
           .from('profiles')
           .select('*')
-          .eq('id', session.user.id)
+          .eq('id', userId)
           .maybeSingle();
         
         if (!isMounted) return;
@@ -127,6 +138,7 @@ export function AuthProvider({
       } catch (err) {
         console.error(`[${timerId}] 🧨 Critical Error during Sync:`, err);
       } finally {
+        syncLockRef.current = null; // Release lock
         completeSync();
       }
     };
@@ -135,14 +147,14 @@ export function AuthProvider({
     const runInit = async () => {
       console.log(`[${timerId}] 🛠️ Checking existing session...`);
       const { data: { session } } = await supabase.auth.getSession();
-      if (isMounted) await syncProfile(session);
+      if (isMounted) await syncProfile(session, "INIT");
     };
 
     runInit();
 
     const { data: { subscription } } = supabase.auth.onAuthStateChange(async (event: string, session: any) => {
       console.log(`[${timerId}] ⚡ Auth Event Detected: ${event}`);
-      if (isMounted) await syncProfile(session);
+      if (isMounted) await syncProfile(session, `EVENT_${event}`);
     });
 
     return () => {

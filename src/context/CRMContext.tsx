@@ -22,6 +22,7 @@ interface CRMContextType {
   user: any;
   userRole: string | null;
   liveMetrics: SetterMetrics;
+  isSyncing: boolean;
 }
 
 const CRMContext = createContext<CRMContextType | undefined>(undefined);
@@ -37,6 +38,7 @@ export function CRMProvider({ children }: { children: React.ReactNode }) {
   const [assignedCloserId, setAssignedCloserId] = useState<string | null>(null);
   const [assignedCloserName, setAssignedCloserName] = useState<string | null>(null);
   const [userPerformance, setUserPerformance] = useState<any | null>(null);
+  const [isSyncing, setIsSyncing] = useState(false);
   const fetchedRef = useRef(false);
 
   const transformLead = (lead: any) => ({
@@ -276,6 +278,8 @@ export function CRMProvider({ children }: { children: React.ReactNode }) {
     setLiveMetrics(hybridMetrics);
   }, [leads, leadNotes, user?.id, userPerformance]);
 
+  // 5. Intelligence Persistence Engine (Syncs Live Metrics to Database for Admin visibility) - REMOVED: Database Triggers now handle this source of truth exclusively to prevent synchronization drift.
+
   const updateLeadNote = async (email: string, updates: any) => {
     const leadId = leadNotes[email]?.id;
 
@@ -292,14 +296,9 @@ export function CRMProvider({ children }: { children: React.ReactNode }) {
 
     try {
       let query = supabase.from('leads').update({
-        status: updates.status,
+        status: optimisticEntry.status,
         setter_id: user?.id,
-        metadata: {
-          ...(leadNotes[email] || {}),
-          ...updates,
-          email,
-          synced_at: now
-        }
+        metadata: optimisticEntry
       });
 
       if (leadId) {
@@ -417,7 +416,7 @@ export function CRMProvider({ children }: { children: React.ReactNode }) {
   };
 
   return (
-    <CRMContext.Provider value={{ activeLead, setActiveLead, leadNotes, updateLeadNote, addLead, leads, totalLeadsCount, userPerformance, loading, user, userRole, assignedCloserName, liveMetrics }}>
+    <CRMContext.Provider value={{ activeLead, setActiveLead, leadNotes, updateLeadNote, addLead, leads, totalLeadsCount, userPerformance, loading, user, userRole, assignedCloserName, liveMetrics, isSyncing }}>
       {children}
     </CRMContext.Provider>
   );

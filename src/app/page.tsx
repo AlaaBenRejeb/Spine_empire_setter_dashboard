@@ -28,7 +28,7 @@ import LeadList from "@/components/LeadList";
 import PersonalTasks from "@/components/PersonalTasks";
 import AddLeadModal from "@/components/AddLeadModal";
 import { useCRM } from "@/context/CRMContext";
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import { useAuth } from "@/context/AuthContext";
 
 function formatTime12Hour(time24: string) {
@@ -41,7 +41,7 @@ function formatTime12Hour(time24: string) {
 }
 
 export default function SetterDashboardContent() {
-  const { activeLead, setActiveLead, leadNotes, updateLeadNote, assignedCloserName, leads, totalLeadsCount, user, userPerformance, liveMetrics } = useCRM();
+  const { activeLead, setActiveLead, leadNotes, updateLeadNote, assignedCloserName, leads, totalLeadsCount, user, userPerformance, liveMetrics, isSyncing } = useCRM();
   const { loading } = useAuth();
   const [noteText, setNoteText] = useState("");
   const [scheduledDate, setScheduledDate] = useState(new Date().toISOString().split('T')[0]);
@@ -53,11 +53,24 @@ export default function SetterDashboardContent() {
   const revenue = liveMetrics.projectedRevenue || 0;
   const conversionRate = liveMetrics.conversionRate || 0;
 
+  const prevActiveLeadEmail = useRef<string | null>(null);
+
   useEffect(() => {
+    // 1. Auto-save current notes for the PREVIOUS lead before switching
+    if (prevActiveLeadEmail.current && prevActiveLeadEmail.current !== activeLead?.Email) {
+      const existingLead = leadNotes[prevActiveLeadEmail.current];
+      const currentStatus = existingLead?.status || "called";
+      updateLeadNote(prevActiveLeadEmail.current, { status: currentStatus, comment: noteText });
+    }
+
+    // 2. Load notes for the NEW active lead
     if (activeLead) {
       setNoteText(leadNotes[activeLead.Email]?.comment || "");
+      prevActiveLeadEmail.current = activeLead.Email;
+    } else {
+      prevActiveLeadEmail.current = null;
     }
-  }, [activeLead, leadNotes]);
+  }, [activeLead?.Email]);
 
   const handleStatusUpdate = (status: string) => {
     if (activeLead) {
@@ -115,9 +128,9 @@ export default function SetterDashboardContent() {
           <div className="text-right">
             <div className="text-[8px] font-black uppercase text-white/20 tracking-widest leading-none">Intelligence Sync</div>
             <div className="flex items-center justify-end gap-1 mt-1">
-              <div className={`w-1 h-1 rounded-full animate-pulse ${Math.abs(totalBooked - (userPerformance?.bookings || 0)) < 1 ? 'bg-emerald-500' : 'bg-amber-500'}`} />
+              <div className={`w-1 h-1 rounded-full animate-pulse ${isSyncing ? 'bg-amber-500' : 'bg-emerald-500'}`} />
               <span className="text-[9px] font-bold text-white uppercase italic tracking-tighter">
-                {Math.abs(totalBooked - (userPerformance?.bookings || 0)) < 1 ? 'Live Sync' : 'Update Pending'}
+                {isSyncing ? 'SYNCING...' : 'SYNCHRONIZED'}
               </span>
             </div>
           </div>
