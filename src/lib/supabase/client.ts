@@ -14,10 +14,7 @@ export function createClient() {
   }
 
   // In the browser, return a shared singleton instance
-  if (!clientInstance && !isInitializing) {
-    isInitializing = true;
-    console.log("Supabase Client: Locking Initialization Singleton...");
-    
+  if (!clientInstance) {
     clientInstance = createBrowserClient(
       process.env.NEXT_PUBLIC_SUPABASE_URL!,
       process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
@@ -27,8 +24,6 @@ export function createClient() {
           autoRefreshToken: true,
           detectSessionInUrl: true,
           storageKey: "spine-setter-auth-v1",
-          // The 'lock' option ensures concurrent tabs don't clash
-          // We provide a custom implementation to speed up recovery in Dev Mode
         },
         realtime: {
           params: {
@@ -37,7 +32,6 @@ export function createClient() {
         },
       }
     );
-    isInitializing = false;
   }
 
   return clientInstance;
