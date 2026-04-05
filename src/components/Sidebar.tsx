@@ -17,7 +17,7 @@ export default function Sidebar({ isOpen, onClose }: SidebarProps) {
 
   const menuItems = [
     { name: "Dashboard", href: "/", icon: LayoutDashboard },
-    { name: "Deals Pipeline", href: "/deals", icon: Briefcase },
+    { name: "Visual Pipeline", href: "/deals", icon: Briefcase },
     { name: "How to Succeed", href: "/onboarding", icon: Presentation },
     { name: "My Calls", href: "/calls", icon: PhoneCall },
     { name: "Performance", href: "/performance", icon: BarChart3 },
@@ -31,7 +31,7 @@ export default function Sidebar({ isOpen, onClose }: SidebarProps) {
         </div>
         <div className="flex flex-col">
           <span className="text-lg font-heading font-bold tracking-tight uppercase leading-none italic">Spine Engine</span>
-          <span className="text-[9px] font-bold tracking-[0.1em] opacity-40 uppercase">Setter Terminal</span>
+          <span className="text-[7px] font-black tracking-[0.2em] opacity-40 uppercase text-primary">Total Market Control</span>
         </div>
       </div>
 
