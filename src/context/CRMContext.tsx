@@ -265,9 +265,10 @@ export function CRMProvider({ children }: { children: React.ReactNode }) {
     localStorage.setItem("spine-empire-lead-notes", JSON.stringify(updated));
 
     try {
-      let query = supabase.from('leads').update({ 
+      let query = supabase.from('leads').update({
         status: updates.status,
-        metadata: { 
+        setter_id: user?.id,
+        metadata: {
           ...(leadNotes[email] || {}), 
           ...updates, 
           email,
