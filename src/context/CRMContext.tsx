@@ -252,25 +252,23 @@ export function CRMProvider({ children }: { children: React.ReactNode }) {
     const leadId = leadNotes[email]?.id;
 
     const now = new Date().toISOString();
-    const updated = { 
-      ...leadNotes, 
-      [email]: { 
-        ...(leadNotes[email] || { status: "new", comment: "" }), 
-        ...updates,
-        synced_at: now,
-        setter_id: user?.id
-      } 
+    const optimisticEntry = {
+      ...(leadNotes[email] || { status: "new", comment: "" }),
+      ...updates,
+      synced_at: now,
+      setter_id: user?.id
     };
-    setLeadNotes(updated);
-    localStorage.setItem("spine-empire-lead-notes", JSON.stringify(updated));
+
+    // Optimistic UI update (state only — NOT localStorage yet)
+    setLeadNotes(prev => ({ ...prev, [email]: optimisticEntry }));
 
     try {
       let query = supabase.from('leads').update({
         status: updates.status,
         setter_id: user?.id,
         metadata: {
-          ...(leadNotes[email] || {}), 
-          ...updates, 
+          ...(leadNotes[email] || {}),
+          ...updates,
           email,
           synced_at: now
         }
@@ -285,13 +283,17 @@ export function CRMProvider({ children }: { children: React.ReactNode }) {
       const { data, error } = await query.select();
 
       if (error) {
+        // Roll back optimistic update on failure
+        setLeadNotes(prev => ({ ...prev, [email]: leadNotes[email] }));
         console.error(`❌ DB Sync Error [${updates.status}]:`, error.message, error.code, error.details);
-        // Fallback: If DB rejection, don't keep it in local storage if we want persistence to be the source of truth
-        // But for now we allow local update for UX while DB is fixed
       } else {
         if (data && data.length > 0) {
+          // Only persist to localStorage after confirmed DB write
+          const confirmed = { ...leadNotes, [email]: optimisticEntry };
+          localStorage.setItem("spine-empire-lead-notes", JSON.stringify(confirmed));
           console.log(`✅ DB Status Synced: ${email} -> ${updates.status}`);
         } else {
+          setLeadNotes(prev => ({ ...prev, [email]: leadNotes[email] }));
           console.warn(`⚠️ No rows updated for ${email}. Checked ID: ${leadId}`);
         }
       }
