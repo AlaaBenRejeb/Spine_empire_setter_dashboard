@@ -41,17 +41,17 @@ function formatTime12Hour(time24: string) {
 }
 
 export default function SetterDashboardContent() {
-  const { activeLead, setActiveLead, leadNotes, updateLeadNote, assignedCloserName, leads, totalLeadsCount, user, userPerformance } = useCRM();
+  const { activeLead, setActiveLead, leadNotes, updateLeadNote, assignedCloserName, leads, totalLeadsCount, user, userPerformance, liveMetrics } = useCRM();
   const { loading } = useAuth();
   const [noteText, setNoteText] = useState("");
   const [scheduledDate, setScheduledDate] = useState(new Date().toISOString().split('T')[0]);
   const [scheduledTime, setScheduledTime] = useState("09:00");
   const [isAddLeadModalOpen, setIsAddLeadModalOpen] = useState(false);
 
-  const totalBooked = userPerformance?.bookings || 0;
-  const wins = userPerformance?.wins || 0;
-  const powerScore = userPerformance?.power_score || 0;
-  const revenue = userPerformance?.revenue || 0;
+  const totalBooked = liveMetrics.totalBooked || 0;
+  const powerScore = liveMetrics.powerScore || 0;
+  const revenue = liveMetrics.projectedRevenue || 0;
+  const conversionRate = liveMetrics.conversionRate || 0;
 
   useEffect(() => {
     if (activeLead) {
@@ -113,10 +113,12 @@ export default function SetterDashboardContent() {
 
           <div className="h-8 w-[1px] bg-white/10 mx-1" />
           <div className="text-right">
-            <div className="text-[8px] font-black uppercase text-white/20 tracking-widest leading-none">System Status</div>
+            <div className="text-[8px] font-black uppercase text-white/20 tracking-widest leading-none">Intelligence Sync</div>
             <div className="flex items-center justify-end gap-1 mt-1">
-              <div className="w-1 h-1 bg-emerald-500 rounded-full animate-pulse" />
-              <span className="text-[9px] font-bold text-white uppercase italic tracking-tighter">Sync Active</span>
+              <div className={`w-1 h-1 rounded-full animate-pulse ${Math.abs(totalBooked - (userPerformance?.bookings || 0)) < 1 ? 'bg-emerald-500' : 'bg-amber-500'}`} />
+              <span className="text-[9px] font-bold text-white uppercase italic tracking-tighter">
+                {Math.abs(totalBooked - (userPerformance?.bookings || 0)) < 1 ? 'Live Sync' : 'Update Pending'}
+              </span>
             </div>
           </div>
         </div>

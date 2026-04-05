@@ -92,10 +92,20 @@ export default function LeadList() {
                           </div>
 
                           <div className="flex flex-col gap-1">
-                             <div className="flex items-center gap-2">
+                             <div className="flex flex-wrap items-center gap-2">
                                 <h3 className="text-lg font-bold tracking-tight uppercase leading-tight">{lead["Practice Name"]}</h3>
                                 {reviews > 110 && (
                                    <Star size={12} className="text-black/20 dark:text-white/20 fill-current" />
+                                )}
+                                {status === 'booked' && (
+                                  <div className="px-2 py-0.5 bg-emerald-500/10 border border-emerald-500/20 rounded text-[7px] font-black text-emerald-500 uppercase tracking-widest whitespace-nowrap">
+                                    Booked
+                                  </div>
+                                )}
+                                {status === 'called' && (
+                                  <div className="px-2 py-0.5 bg-amber-500/10 border border-amber-500/20 rounded text-[7px] font-black text-amber-500 uppercase tracking-widest whitespace-nowrap">
+                                    Called
+                                  </div>
                                 )}
                              </div>
                              <div className="flex items-center gap-4 text-[10px] font-bold text-muted-foreground uppercase tracking-widest leading-none">

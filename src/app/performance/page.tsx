@@ -8,15 +8,16 @@ import { useState } from "react";
 type Timeframe = 'today' | 'month' | 'all';
 
 export default function PerformancePage() {
-  const { leads, leadNotes, user, userPerformance, totalLeadsCount } = useCRM();
+  const { leads, leadNotes, user, userPerformance, totalLeadsCount, liveMetrics } = useCRM();
   const [timeframe, setTimeframe] = useState<Timeframe>('all');
 
-  if (!userPerformance) return null;
-
-  const { bookings: totalBooked, win_rate: conversionRate, power_score: powerScore, revenue } = userPerformance;
+  const totalBooked = liveMetrics.totalBooked || 0;
+  const conversionRate = liveMetrics.conversionRate || 0;
+  const powerScore = liveMetrics.powerScore || 0;
+  const revenue = liveMetrics.projectedRevenue || 0;
   const DEAL_VALUE = 6500;
   const totalLeads = totalLeadsCount || 0;
-  const totalDials = userPerformance.total_dials || totalLeads; 
+  const totalDials = liveMetrics.totalDials || totalLeads; 
   
   const totalIgnored = Object.values(leadNotes).filter((n: any) => 
     (n.setter_id === user?.id) && (n.status === "ignored" || n.status === "archived")

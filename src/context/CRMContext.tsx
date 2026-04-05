@@ -21,6 +21,7 @@ interface CRMContextType {
   loading: boolean;
   user: any;
   userRole: string | null;
+  liveMetrics: SetterMetrics;
 }
 
 const CRMContext = createContext<CRMContextType | undefined>(undefined);
@@ -248,6 +249,33 @@ export function CRMProvider({ children }: { children: React.ReactNode }) {
     };
   }, [user?.id, assignedCloserId]);
 
+  // 4. Live Metric Derivation (Failsafe for background table lag)
+  const [liveMetrics, setLiveMetrics] = useState<SetterMetrics>({
+    totalLeads: 0,
+    totalDials: 0,
+    totalBooked: 0,
+    conversionRate: 0,
+    powerScore: 0,
+    projectedRevenue: 0
+  });
+
+  useEffect(() => {
+    if (!user?.id) return;
+    const stats = calculateSetterMetrics(leads, leadNotes, user.id, 'all');
+    
+    // Merge Strategy: Prefer Live stats for active session counts, but 
+    // allow Database metrics to override if they represent a wider historical context
+    const hybridMetrics = {
+      ...stats,
+      // Use revenue from DB performance if it's higher (includes past sessions)
+      projectedRevenue: Math.max(stats.projectedRevenue, userPerformance?.revenue || 0),
+      // Power score from DB is usually more 'tempered' by history
+      powerScore: userPerformance?.power_score || stats.powerScore
+    };
+    
+    setLiveMetrics(hybridMetrics);
+  }, [leads, leadNotes, user?.id, userPerformance]);
+
   const updateLeadNote = async (email: string, updates: any) => {
     const leadId = leadNotes[email]?.id;
 
@@ -389,7 +417,7 @@ export function CRMProvider({ children }: { children: React.ReactNode }) {
   };
 
   return (
-    <CRMContext.Provider value={{ activeLead, setActiveLead, leadNotes, updateLeadNote, addLead, leads, totalLeadsCount, userPerformance, loading, user, userRole, assignedCloserName }}>
+    <CRMContext.Provider value={{ activeLead, setActiveLead, leadNotes, updateLeadNote, addLead, leads, totalLeadsCount, userPerformance, loading, user, userRole, assignedCloserName, liveMetrics }}>
       {children}
     </CRMContext.Provider>
   );
