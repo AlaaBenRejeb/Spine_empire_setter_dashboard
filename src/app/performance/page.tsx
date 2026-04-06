@@ -17,11 +17,22 @@ export default function PerformancePage() {
   const revenue = liveMetrics.projectedRevenue || 0;
   const DEAL_VALUE = 6500;
   const totalLeads = totalLeadsCount || 0;
-  const totalDials = liveMetrics.totalDials || totalLeads; 
+  const totalDials = liveMetrics.totalDials || 0; 
   
-  const totalIgnored = Object.values(leadNotes).filter((n: any) => 
-    (n.setter_id === user?.id) && (n.status === "ignored" || n.status === "archived")
-  ).length;
+  const totalIgnored = Object.values(leadNotes).filter((n: any) => {
+    if (n.setter_id !== user?.id) return false;
+    if (n.status !== "ignored" && n.status !== "archived") return false;
+    
+    if (timeframe === 'today') {
+      const today = new Date().toISOString().split('T')[0];
+      return n.synced_at?.startsWith(today);
+    } else if (timeframe === 'month') {
+      const now = new Date();
+      const d = new Date(n.synced_at);
+      return d.getMonth() === now.getMonth() && d.getFullYear() === now.getFullYear();
+    }
+    return true;
+  }).length;
 
   const metrics = [
     { label: "Elite Target Pool", value: totalLeads.toLocaleString(), icon: <Target className="text-primary" />, desc: "Total database nodes", trend: "Live" },
@@ -31,8 +42,8 @@ export default function PerformancePage() {
   ];
 
   const distribution = [
-    { label: "Market Fresh", count: Math.max(0, totalLeads - totalDials), color: "bg-primary" },
-    { label: "Active Pulse", count: Math.max(0, totalDials - totalBooked - totalIgnored), color: "bg-yellow-500" },
+    { label: "Market Fresh", count: Math.max(0, totalLeads - totalDials - totalIgnored), color: "bg-primary" },
+    { label: "Active Pulse", count: Math.max(0, totalDials - totalBooked), color: "bg-yellow-500" },
     { label: "Elite Booked", count: totalBooked, color: "bg-green-500" },
     { label: "Market Archive", count: totalIgnored, color: "bg-red-500" }
   ];
