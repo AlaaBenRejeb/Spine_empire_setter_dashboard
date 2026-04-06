@@ -118,7 +118,7 @@ export function AuthProvider({
 
     runInit();
 
-    const { data: { subscription } } = supabase.auth.onAuthStateChange(async (event, session) => {
+    const { data: { subscription } } = supabase.auth.onAuthStateChange(async (event: string, session: any) => {
       if (isMounted) await syncProfile(session, `EVENT_${event}`, timerId, isMounted);
     });
 
