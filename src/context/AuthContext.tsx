@@ -79,12 +79,16 @@ export function AuthProvider({
 
     try {
       setUser(session.user);
-      const { data: profileData, error } = await supabase
+      const fetchPromise = supabase
         .from('profiles')
         .select('*')
         .eq('id', userId)
         .maybeSingle();
-      
+      const timeoutPromise = new Promise<{ data: null; error: Error }>((resolve) =>
+        setTimeout(() => resolve({ data: null, error: new Error('Profile fetch timed out') }), 8000)
+      );
+      const { data: profileData, error } = await Promise.race([fetchPromise, timeoutPromise]);
+
       if (!isMounted) return;
       if (error) console.error(`[${timerId}] Profile Fetch Error:`, error);
 
@@ -135,7 +139,7 @@ export function AuthProvider({
         console.warn(`⚠️ Auth Synchronization Timeout: Engaging Fail-safe protocols.`);
         setLoading(false);
       }
-    }, 45000); // 45s adaptive failsafe
+    }, 8000);
     return () => clearTimeout(failsafe);
   }, [loading]);
 
