@@ -4,7 +4,7 @@ import { useEffect, useState } from "react"
 import { useRouter, useSearchParams } from "next/navigation"
 import { createClient } from "@/lib/supabase/client"
 import { motion } from "framer-motion"
-import { Shield, Zap, AlertCircle, Loader2 } from "lucide-react"
+import { Shield, AlertCircle, Loader2 } from "lucide-react"
 
 export default function JoinPage() {
   const router = useRouter()
@@ -25,20 +25,18 @@ export default function JoinPage() {
     const verifyToken = async () => {
       try {
         const { data, error: fetchError } = await supabase
-          .from('invitations')
-          .select('*')
-          .eq('token', token)
-          .is('used_at', null)
-          .single()
+          .rpc('verify_invitation', { p_token: token });
 
-        if (fetchError || !data) {
+        const invite = Array.isArray(data) ? data[0] : data;
+
+        if (fetchError || !invite) {
           setError("ACCESS TOKEN INVALID OR EXPIRED. COORDINATE WITH SUPERADMIN.")
           setLoading(false)
           return
         }
 
-        // Token is valid, redirect to signup with context
-        router.push(`/auth/signup?token=${token}&email=${encodeURIComponent(data.email)}&role=${data.role}`)
+        // Token is valid, redirect to secure signup flow (token only)
+        router.push(`/auth/signup?token=${encodeURIComponent(token)}`)
       } catch (err) {
         setError("SYSTEM SYNCHRONIZATION FAILURE. RETRY LATER.")
         setLoading(false)
@@ -64,7 +62,7 @@ export default function JoinPage() {
 
         <div className="flex flex-col gap-2">
           <h1 className="text-4xl font-heading font-black tracking-tighter uppercase italic text-white leading-none">
-            {error ? "Breach <span class='text-red-500'>Detected.</span>" : "Nexus <span class='text-gradient'>Sync.</span>"}
+            {error ? <>Breach <span className='text-red-500'>Detected.</span></> : <>Nexus <span className='text-gradient'>Sync.</span></>}
           </h1>
           <p className="text-[10px] font-black uppercase tracking-[0.4em] text-white/30 italic">
             Invitation Validation Strategy

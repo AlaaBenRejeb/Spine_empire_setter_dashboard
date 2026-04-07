@@ -3,6 +3,7 @@
 import { useState, useEffect } from "react";
 import { Plus, Trash2, CheckCircle, Circle } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
+import { useAuth } from "@/context/AuthContext";
 
 interface Task {
   id: string;
@@ -12,17 +13,21 @@ interface Task {
 }
 
 export default function PersonalTasks({ theme }: { theme: "dark" | "light" }) {
+  const { user } = useAuth();
   const [tasks, setTasks] = useState<Task[]>([]);
   const [input, setInput] = useState("");
+  const storageKey = user?.id ? `spine-empire-personal-tasks-${user.id}` : null;
 
   useEffect(() => {
-    const saved = localStorage.getItem("spine-empire-personal-tasks");
+    if (!storageKey) return;
+    const saved = localStorage.getItem(storageKey);
     if (saved) setTasks(JSON.parse(saved));
-  }, []);
+  }, [storageKey]);
 
   useEffect(() => {
-    localStorage.setItem("spine-empire-personal-tasks", JSON.stringify(tasks));
-  }, [tasks]);
+    if (!storageKey) return;
+    localStorage.setItem(storageKey, JSON.stringify(tasks));
+  }, [tasks, storageKey]);
 
   const addTask = (e: React.FormEvent) => {
     e.preventDefault();

@@ -18,7 +18,7 @@ export default function LeadList() {
       if (!matchesSearch) return false;
       if (statusFilter === "all") return true;
       
-      const status = leadNotes[lead.Email]?.status || "new";
+      const status = leadNotes[lead.id]?.status || "new";
       return status === statusFilter;
     });
   }, [search, leads, leadNotes, statusFilter]);
@@ -61,14 +61,14 @@ export default function LeadList() {
       <div className="flex-1 overflow-y-auto pr-2 space-y-4 hide-scrollbar">
         <AnimatePresence mode="popLayout">
           {filteredLeads.map((lead, idx) => {
-             const isActive = activeLead?.Email === lead.Email;
-             const notes = leadNotes[lead.Email];
+             const isActive = activeLead?.id === lead.id;
+             const notes = leadNotes[lead.id];
              const status = notes?.status || "new";
              const reviews = parseInt(lead["Google Reviews"]?.toString() || "0");
 
              return (
                <motion.div
-                 key={lead.Email}
+                 key={lead.id}
                  initial={{ opacity: 0, y: 10 }}
                  animate={{ opacity: 1, y: 0 }}
                  transition={{ delay: idx * 0.03 }}
@@ -126,7 +126,7 @@ export default function LeadList() {
                             className="flex-1 md:flex-none bg-black text-white dark:bg-white dark:text-black font-bold uppercase text-[10px] tracking-widest px-8 py-4 rounded-xl flex items-center gap-3 hover:translate-y-[-1px] transition-all shadow-sm active:translate-y-0"
                             onClick={(e) => {
                                 e.stopPropagation();
-                                updateLeadNote(lead.Email, { status: "called" });
+                                updateLeadNote(lead.id, { status: "called" });
                             }}
                           >
                              <Phone size={16} strokeWidth={2.5} /> CALL 

@@ -9,8 +9,8 @@ export default function CallHistoryPage() {
 
   const callLogs = Object.entries(leadNotes)
     .filter(([_, notes]) => ['called', 'booked', 'won', 'lost', 'noshow'].includes(notes.status))
-    .map(([email, notes]) => {
-      const lead = leads.find((l: any) => l.Email === email);
+    .map(([leadId, notes]) => {
+      const lead = leads.find((l: any) => l.id === leadId);
       return { ...lead, ...notes };
     })
     .reverse();

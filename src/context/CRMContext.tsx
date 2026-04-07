@@ -12,7 +12,7 @@ interface CRMContextType {
   activeLead: any;
   setActiveLead: (lead: any) => void;
   leadNotes: Record<string, any>;
-  updateLeadNote: (email: string, updates: any) => void;
+  updateLeadNote: (leadId: string, updates: any) => void;
   addLead: (lead: any) => Promise<void>;
   assignedCloserName: string | null;
   leads: any[];
@@ -27,8 +27,18 @@ interface CRMContextType {
 
 const CRMContext = createContext<CRMContextType | undefined>(undefined);
 
+const SETTER_MUTABLE_STATUSES = new Set([
+  "new",
+  "called",
+  "contacted",
+  "booked",
+  "ignored",
+]);
+
+const isSetterStatusAllowed = (value: string): boolean => SETTER_MUTABLE_STATUSES.has(value);
+
 export function CRMProvider({ children }: { children: React.ReactNode }) {
-  const { user, profile: authProfile } = useAuth();
+  const { user } = useAuth();
   const [activeLead, setActiveLead] = useState<any>(null);
   const [leadNotes, setLeadNotes] = useState<Record<string, any>>({});
   const [leads, setLeads] = useState<any[]>([]);
@@ -40,8 +50,10 @@ export function CRMProvider({ children }: { children: React.ReactNode }) {
   const [userPerformance, setUserPerformance] = useState<any | null>(null);
   const [isSyncing, setIsSyncing] = useState(false);
   const fetchedRef = useRef(false);
+  const notesStorageKey = user?.id ? `spine-empire-lead-notes-${user.id}` : null;
 
   const transformLead = (lead: any) => ({
+    id: lead.id,
     "Practice Name": lead.business_name,
     "First Name": lead.contact_name?.split(' ')[0] || "Owner",
     "Last Name": lead.contact_name?.split(' ').slice(1).join(' ') || "",
@@ -57,8 +69,18 @@ export function CRMProvider({ children }: { children: React.ReactNode }) {
 
   // 1. Initial Data Load — driven by auth state, no competing getSession() call
   useEffect(() => {
-    const saved = localStorage.getItem("spine-empire-lead-notes");
-    if (saved) setLeadNotes(JSON.parse(saved));
+    if (notesStorageKey) {
+      const saved = localStorage.getItem(notesStorageKey);
+      if (saved) {
+        try {
+          setLeadNotes(JSON.parse(saved));
+        } catch {
+          setLeadNotes({});
+        }
+      } else {
+        setLeadNotes({});
+      }
+    }
 
     const fetchLeads = async (sessionUser: any) => {
       setLoading(true);
@@ -108,17 +130,22 @@ export function CRMProvider({ children }: { children: React.ReactNode }) {
             DealValue: lead.metadata?.deal_value || 6500,
           }));
           dbLeads.forEach((lead: any) => {
-            const key = lead.metadata?.email || lead.id;
-            syncedNotes[key] = {
+            syncedNotes[lead.id] = {
               id: lead.id,
               status: lead.status,
               comment: lead.metadata?.comment || "",
               deal_value: lead.metadata?.deal_value || 6500,
               synced_at: lead.metadata?.synced_at,
-              setter_id: lead.setter_id
+              setter_id: lead.setter_id,
             };
           });
-          setLeadNotes(prev => ({ ...prev, ...syncedNotes }));
+          setLeadNotes((prev) => {
+            const next = { ...prev, ...syncedNotes };
+            if (notesStorageKey) {
+              localStorage.setItem(notesStorageKey, JSON.stringify(next));
+            }
+            return next;
+          });
           setLeads(syncedLeads);
         }
       } catch (err) {
@@ -133,6 +160,7 @@ export function CRMProvider({ children }: { children: React.ReactNode }) {
       fetchLeads(user);
     } else if (!user) {
       setLoading(false);
+      setLeadNotes({});
       fetchedRef.current = false; // Reset if they log out
     }
 
@@ -143,33 +171,48 @@ export function CRMProvider({ children }: { children: React.ReactNode }) {
         const updated = (payload.eventType === 'DELETE' ? payload.old : payload.new) as any;
 
         if (payload.eventType === 'DELETE') {
-          const email = updated.metadata?.email || updated.id;
-          setLeads(prev => prev.filter(l => l.Email !== email));
+          setLeads(prev => prev.filter(l => l.id !== updated.id));
+          setLeadNotes((prev) => {
+            if (!prev[updated.id]) {
+              return prev;
+            }
+            const next = { ...prev };
+            delete next[updated.id];
+            if (notesStorageKey) {
+              localStorage.setItem(notesStorageKey, JSON.stringify(next));
+            }
+            return next;
+          });
           setTotalLeadsCount(prev => Math.max(0, prev - 1));
           return;
         }
 
         const transformed = transformLead(updated);
-        const email = transformed.Email;
 
-        setLeadNotes(prev => ({
-          ...prev,
-          [email]: {
-            status: updated.status,
-            comment: updated.metadata?.comment || "",
-            deal_value: updated.metadata?.deal_value || 6500,
-            synced_at: updated.metadata?.synced_at,
-            setter_id: updated.setter_id
+        setLeadNotes((prev) => {
+          const next = {
+            ...prev,
+            [updated.id]: {
+              status: updated.status,
+              comment: updated.metadata?.comment || "",
+              deal_value: updated.metadata?.deal_value || 6500,
+              synced_at: updated.metadata?.synced_at,
+              setter_id: updated.setter_id
+            }
+          };
+          if (notesStorageKey) {
+            localStorage.setItem(notesStorageKey, JSON.stringify(next));
           }
-        }));
+          return next;
+        });
 
         setLeads(prev => {
-          const exists = prev.find(l => l.Email === email);
+          const exists = prev.find(l => l.id === updated.id);
           if (exists) {
-            return prev.map(l => l.Email === email ? transformed : l);
+            return prev.map(l => l.id === updated.id ? transformed : l);
           } else {
             setTotalLeadsCount(prev => prev + 1);
-            return [transformed, ...prev];
+            return [{ ...transformed, id: updated.id }, ...prev];
           }
         });
       })
@@ -178,7 +221,7 @@ export function CRMProvider({ children }: { children: React.ReactNode }) {
     return () => {
       supabase.removeChannel(channel);
     };
-  }, [user]);
+  }, [user, notesStorageKey]);
 
   // Update real-time performance metrics from Database "Intelligence Engine"
   useEffect(() => {
@@ -280,88 +323,120 @@ export function CRMProvider({ children }: { children: React.ReactNode }) {
 
   // 5. Intelligence Persistence Engine (Syncs Live Metrics to Database for Admin visibility) - REMOVED: Database Triggers now handle this source of truth exclusively to prevent synchronization drift.
 
-  const updateLeadNote = async (email: string, updates: any) => {
-    const leadId = leadNotes[email]?.id;
+  const updateLeadNote = async (leadId: string, updates: any) => {
+    if (!leadId) return;
 
+    const previousEntry = leadNotes[leadId];
     const now = new Date().toISOString();
+    const nextStatus = (updates?.status || previousEntry?.status || "new") as string;
+
+    if (!isSetterStatusAllowed(nextStatus)) {
+      console.warn(`⚠️ Blocked unsupported setter status write: ${nextStatus}`);
+      return;
+    }
+
     const optimisticEntry = {
-      ...(leadNotes[email] || { status: "new", comment: "" }),
+      ...(previousEntry || { status: "new", comment: "" }),
       ...updates,
+      status: nextStatus,
       synced_at: now,
-      setter_id: user?.id
+      setter_id: user?.id,
+      id: leadId,
     };
 
-    // Optimistic UI update (state only — NOT localStorage yet)
-    setLeadNotes(prev => ({ ...prev, [email]: optimisticEntry }));
+    setLeadNotes((prev) => ({ ...prev, [leadId]: optimisticEntry }));
 
     try {
-      let query = supabase.from('leads').update({
-        status: optimisticEntry.status,
-        setter_id: user?.id,
-        metadata: optimisticEntry
+      const { data: existingLead, error: existingLeadError } = await supabase
+        .from("leads")
+        .select("metadata")
+        .eq("id", leadId)
+        .maybeSingle();
+
+      if (existingLeadError) {
+        throw existingLeadError;
+      }
+
+      const mergedMetadata = {
+        ...(existingLead?.metadata || {}),
+        ...optimisticEntry,
+      };
+
+      const { data, error } = await supabase
+        .from("leads")
+        .update({
+          status: optimisticEntry.status,
+          setter_id: user?.id,
+          metadata: mergedMetadata,
+        })
+        .eq("id", leadId)
+        .select();
+
+      if (error || !data || data.length === 0) {
+        setLeadNotes((prev) => {
+          const next = { ...prev };
+          if (previousEntry) {
+            next[leadId] = previousEntry;
+          } else {
+            delete next[leadId];
+          }
+          if (notesStorageKey) {
+            localStorage.setItem(notesStorageKey, JSON.stringify(next));
+          }
+          return next;
+        });
+        console.error(`❌ DB Sync Error [${updates.status}]:`, error?.message || "No rows updated");
+        return;
+      }
+
+      setLeadNotes((prev) => {
+        const next = { ...prev, [leadId]: optimisticEntry };
+        if (notesStorageKey) {
+          localStorage.setItem(notesStorageKey, JSON.stringify(next));
+        }
+        return next;
       });
 
-      if (leadId) {
-        query = query.eq('id', leadId);
-      } else {
-        query = query.eq('metadata->>email', email);
-      }
-
-      const { data, error } = await query.select();
-
-      if (error) {
-        // Roll back optimistic update on failure
-        setLeadNotes(prev => ({ ...prev, [email]: leadNotes[email] }));
-        console.error(`❌ DB Sync Error [${updates.status}]:`, error.message, error.code, error.details);
-      } else {
-        if (data && data.length > 0) {
-          // Only persist to localStorage after confirmed DB write
-          const confirmed = { ...leadNotes, [email]: optimisticEntry };
-          localStorage.setItem("spine-empire-lead-notes", JSON.stringify(confirmed));
-          console.log(`✅ DB Status Synced: ${email} -> ${updates.status}`);
-        } else {
-          setLeadNotes(prev => ({ ...prev, [email]: leadNotes[email] }));
-          console.warn(`⚠️ No rows updated for ${email}. Checked ID: ${leadId}`);
-        }
-      }
-      
       // Automatic Handoff to Closer
-      if (!error && updates.status === 'booked') {
+      if (nextStatus === "booked") {
         let closerId = assignedCloserId;
-        
+
         if (!closerId && user) {
           const { data: mapping } = await supabase
-            .from('setter_closer_mapping')
-            .select('closer_id')
-            .eq('setter_id', user.id)
+            .from("setter_closer_mapping")
+            .select("closer_id")
+            .eq("setter_id", user.id)
             .maybeSingle();
           closerId = mapping?.closer_id;
         }
 
         if (closerId) {
-          const targetId = leadId || data?.[0]?.id;
-          if (targetId) {
-            const { error: handoffError } = await supabase
-              .from('leads')
-              .update({ closer_id: closerId })
-              .eq('id', targetId);
-            if (handoffError) {
-              console.error(`❌ HANDOFF FAILED: Lead ${targetId} booked but not routed to Closer ${closerId}:`, handoffError.message);
-            } else {
-              console.log(`📡 Flow Matrix: Routed lead ${targetId} → Closer ${closerId}`);
-            }
+          const { error: handoffError } = await supabase
+            .from("leads")
+            .update({ closer_id: closerId })
+            .eq("id", leadId);
+          if (handoffError) {
+            console.error(`❌ HANDOFF FAILED: Lead ${leadId} booked but not routed to Closer ${closerId}:`, handoffError.message);
           } else {
-            console.error(`❌ HANDOFF FAILED: Lead booked but no target ID found to assign Closer ${closerId}`);
+            console.log(`📡 Flow Matrix: Routed lead ${leadId} → Closer ${closerId}`);
           }
         } else {
           console.warn(`⚠️ Lead booked but no Closer assigned in Flow Matrix for Setter ${user?.id}. Configure mapping in Admin Ops.`);
         }
       }
-        
-      if (error) {
-        console.error("❌ Supabase update failed:", error.message);
-      }
     } catch (err) {
+      setLeadNotes((prev) => {
+        const next = { ...prev };
+        if (previousEntry) {
+          next[leadId] = previousEntry;
+        } else {
+          delete next[leadId];
+        }
+        if (notesStorageKey) {
+          localStorage.setItem(notesStorageKey, JSON.stringify(next));
+        }
+        return next;
+      });
       console.error("❌ Unexpected error during sync:", err);
     }
   };
@@ -390,6 +465,7 @@ export function CRMProvider({ children }: { children: React.ReactNode }) {
       if (!error && data) {
         const newLeadRaw = data[0];
         const newLeadTransformed = {
+          id: newLeadRaw.id,
           "Practice Name": newLeadRaw.business_name,
           "First Name": newLeadRaw.contact_name?.split(' ')[0] || "Owner",
           "Last Name": newLeadRaw.contact_name?.split(' ').slice(1).join(' ') || "",
@@ -405,10 +481,16 @@ export function CRMProvider({ children }: { children: React.ReactNode }) {
 
         setLeads(prev => [newLeadTransformed, ...prev]);
         setTotalLeadsCount(prev => prev + 1);
-        setLeadNotes(prev => ({ 
-          ...prev, 
-          [newLeadTransformed.Email]: { status: 'new', comment: "", deal_value: 6500 } 
-        }));
+        setLeadNotes((prev) => {
+          const next = {
+            ...prev,
+            [newLeadRaw.id]: { id: newLeadRaw.id, status: "new", comment: "", deal_value: 6500 },
+          };
+          if (notesStorageKey) {
+            localStorage.setItem(notesStorageKey, JSON.stringify(next));
+          }
+          return next;
+        });
       }
     } catch (err) {
       console.error("Unexpected error adding lead:", err);

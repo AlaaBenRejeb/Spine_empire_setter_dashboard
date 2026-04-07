@@ -24,7 +24,7 @@ export default function DealsPage() {
 
   const getLeadsByStatus = (status: string) => {
     return leads.filter((lead) => {
-      const notes = leadNotes[lead.Email];
+      const notes = leadNotes[lead.id];
       const leadStatus = notes?.status || "new";
       return leadStatus === status;
     });
@@ -83,7 +83,7 @@ export default function DealsPage() {
                    const reviews = parseInt(lead["Google Reviews"]?.toString() || "0");
                    return (
                      <motion.div
-                       key={lead.Email}
+                       key={lead.id}
                        initial={{ opacity: 0, scale: 0.9, y: 30 }}
                        animate={{ opacity: 1, scale: 1, y: 0 }}
                        transition={{ delay: idx * 0.04 + colIdx * 0.1, duration: 0.6, ease: [0.16, 1, 0.3, 1] }}
@@ -119,10 +119,10 @@ export default function DealsPage() {
                                    <DollarSign size={12} className="text-primary" />
                                    <input 
                                       type="text"
-                                      defaultValue={leadNotes[lead.Email]?.deal_value || lead.DealValue || 4000}
+                                      defaultValue={leadNotes[lead.id]?.deal_value || lead.DealValue || 4000}
                                       onBlur={(e) => {
                                          const val = parseInt(e.target.value.replace(/\D/g, ''));
-                                         updateLeadNote(lead.Email, { deal_value: val || 4000 });
+                                         updateLeadNote(lead.id, { deal_value: val || 4000 });
                                       }}
                                       className="text-[10px] font-black text-primary bg-transparent border-none outline-none w-14 focus:ring-0 p-0"
                                    />
@@ -155,27 +155,27 @@ export default function DealsPage() {
                                       <button 
                                          onClick={(e) => {
                                             e.stopPropagation();
-                                            setStageSelectorId(stageSelectorId === lead.Email ? null : lead.Email);
+                                            setStageSelectorId(stageSelectorId === lead.id ? null : lead.id);
                                          }}
-                                         className={`p-2.5 rounded-xl transition-all shadow-lg hover:scale-110 active:scale-95 ${stageSelectorId === lead.Email ? 'bg-white text-black' : 'bg-white/10 text-white hover:bg-white/20'}`}
+                                         className={`p-2.5 rounded-xl transition-all shadow-lg hover:scale-110 active:scale-95 ${stageSelectorId === lead.id ? 'bg-white text-black' : 'bg-white/10 text-white hover:bg-white/20'}`}
                                          title="Move Stage"
                                       >
                                          <ArrowLeftRight size={14} strokeWidth={3} />
                                       </button>
                                       <AnimatePresence>
-                                         {stageSelectorId === lead.Email && (
+                                         {stageSelectorId === lead.id && (
                                             <motion.div 
                                                initial={{ opacity: 0, scale: 0.9, y: 10 }}
                                                animate={{ opacity: 1, scale: 1, y: 0 }}
                                                exit={{ opacity: 0, scale: 0.9, y: 10 }}
                                                className="absolute bottom-12 right-0 bg-[#1a1a1a] border border-glass-border p-2 rounded-xl shadow-2xl z-[100] min-w-[160px] flex flex-col gap-1"
                                             >
-                                               {COLUMNS.filter(c => c.id !== (leadNotes[lead.Email]?.status || "new")).map(col => (
+                                               {COLUMNS.filter(c => c.id !== (leadNotes[lead.id]?.status || "new")).map(col => (
                                                   <button 
                                                      key={col.id}
                                                      onClick={(e) => {
                                                         e.stopPropagation();
-                                                        updateLeadNote(lead.Email, { status: col.id });
+                                                        updateLeadNote(lead.id, { status: col.id });
                                                         setStageSelectorId(null);
                                                      }}
                                                      className="flex items-center justify-between px-3 py-2 hover:bg-white/5 rounded-lg text-[10px] font-black uppercase tracking-widest text-muted-foreground hover:text-white transition-all group"

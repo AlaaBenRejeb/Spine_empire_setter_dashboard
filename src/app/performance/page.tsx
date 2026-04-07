@@ -21,7 +21,7 @@ export default function PerformancePage() {
   
   const totalIgnored = Object.values(leadNotes).filter((n: any) => {
     if (n.setter_id !== user?.id) return false;
-    if (n.status !== "ignored" && n.status !== "archived") return false;
+    if (n.status !== "ignored") return false;
     
     if (timeframe === 'today') {
       const today = new Date().toISOString().split('T')[0];
@@ -96,7 +96,7 @@ export default function PerformancePage() {
             <div>
               <div className="text-5xl font-heading font-black mb-2 tracking-tighter group-hover:text-primary transition-colors">{m.value}</div>
               <span className="text-[10px] text-muted-foreground font-black uppercase tracking-[0.3em] block mb-3 opacity-60 italic">{m.label}</span>
-              <p className="text-[10px] text-black/40 dark:text-white/40 font-bold leading-tight uppercase font-heading">/// DATA {m.desc}</p>
+              <p className="text-[10px] text-black/40 dark:text-white/40 font-bold leading-tight uppercase font-heading">DATA: {m.desc}</p>
             </div>
           </motion.div>
         ))}

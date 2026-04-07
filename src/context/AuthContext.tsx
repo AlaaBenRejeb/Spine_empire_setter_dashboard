@@ -37,12 +37,10 @@ export function AuthProvider({
   const [showReset, setShowReset] = useState(false);
   const syncLockRef = useRef<string | null>(null);
 
-  const isSuperadmin = 
-    user?.email?.toLowerCase() === 'alaabenrejeb.b@icloud.com' || 
-    profile?.role === 'superadmin';
+  const isSuperadmin = profile?.role === 'superadmin';
 
   const checkPortalAccess = (userProfile: any) => {
-    if (isSuperadmin) return;
+    if (userProfile?.role === 'superadmin') return;
     if (!userProfile) return;
     if (typeof window !== 'undefined' && (window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1')) return;
     

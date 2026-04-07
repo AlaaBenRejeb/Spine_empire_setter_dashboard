@@ -4,16 +4,16 @@ import { useState, useEffect } from "react"
 import { useRouter, useSearchParams } from "next/navigation"
 import { createClient } from "@/lib/supabase/client"
 import { motion } from "framer-motion"
-import { Zap, Mail, Lock, User, ChevronRight, Loader2, Target, CheckCircle2 } from "lucide-react"
+import { Mail, Lock, User, ChevronRight, Loader2, CheckCircle2 } from "lucide-react"
 
 export default function SignupPage() {
   const router = useRouter()
   const searchParams = useSearchParams()
   const token = searchParams.get("token")
-  const inviteEmail = searchParams.get("email")
-  const inviteRole = searchParams.get("role")
+  const [inviteInfo, setInviteInfo] = useState<{ email: string; role: string } | null>(null)
+  const [validatingInvite, setValidatingInvite] = useState(true)
 
-  const [email, setEmail] = useState((inviteEmail && inviteEmail !== 'null') ? inviteEmail : "")
+  const [email, setEmail] = useState("")
   const [password, setPassword] = useState("")
   const [confirmPassword, setConfirmPassword] = useState("")
   const [firstName, setFirstName] = useState("")
@@ -23,17 +23,40 @@ export default function SignupPage() {
   const [success, setSuccess] = useState(false)
   const [supabase] = useState(() => createClient())
 
-  const isEmailPredefined = !!(inviteEmail && inviteEmail !== 'null' && inviteEmail !== "");
-
   useEffect(() => {
     if (!token) {
       router.push('/')
+      return
     }
-  }, [token, router])
+
+    const verifyInvite = async () => {
+      setValidatingInvite(true)
+      const { data, error: verifyError } = await supabase
+        .rpc('verify_invitation', { p_token: token })
+
+      const invite = Array.isArray(data) ? data[0] : data
+      if (verifyError || !invite) {
+        setError("ACCESS TOKEN INVALID OR EXPIRED. COORDINATE WITH SUPERADMIN.")
+        setValidatingInvite(false)
+        return
+      }
+
+      setInviteInfo({ email: invite.email, role: invite.role })
+      setEmail(invite.email || "")
+      setValidatingInvite(false)
+    }
+
+    verifyInvite()
+  }, [token, router, supabase])
 
 
   const handleSignup = async (e: React.FormEvent) => {
     e.preventDefault()
+    if (!inviteInfo) {
+      setError("INVITATION CONTEXT NOT VERIFIED.")
+      return
+    }
+
     if (password !== confirmPassword) {
       setError("PASSWORDS DO NOT MATCH.")
       return
@@ -45,7 +68,7 @@ export default function SignupPage() {
     try {
       // 1. Auth Signup
       const { data: authData, error: signupError } = await supabase.auth.signUp({
-        email,
+        email: inviteInfo.email,
         password,
         options: {
           data: {
@@ -58,22 +81,17 @@ export default function SignupPage() {
       if (signupError) throw signupError
 
       if (authData.user) {
-        // 2. Mark invitation as used
-        await supabase
-          .from('invitations')
-          .update({ used_at: new Date().toISOString() })
-          .eq('token', token)
+        // 2. Atomically consume invitation + assign secure role from DB invite record
+        const { error: consumeError } = await supabase.rpc('consume_invitation', {
+          p_token: token,
+          p_user_id: authData.user.id,
+          p_first_name: firstName,
+          p_last_name: lastName
+        })
 
-        // Note: The 'profiles' trigger in Supabase should handle entry automatically.
-        // We'll update the role manually if needed to ensure sync.
-        await supabase
-           .from('profiles')
-           .update({ 
-               role: inviteRole,
-               first_name: firstName,
-               last_name: lastName
-           })
-           .eq('id', authData.user.id)
+        if (consumeError) {
+          throw consumeError
+        }
 
         setSuccess(true)
         setTimeout(() => {
@@ -107,6 +125,17 @@ export default function SignupPage() {
     )
   }
 
+  if (validatingInvite) {
+    return (
+      <div className="min-h-screen bg-black text-white flex items-center justify-center p-6 font-sans relative overflow-hidden">
+        <div className="text-center flex flex-col items-center gap-4">
+          <Loader2 className="animate-spin text-white/40" size={32} />
+          <p className="text-[10px] font-black uppercase tracking-[0.4em] text-white/30 italic">VALIDATING INVITATION TOKEN...</p>
+        </div>
+      </div>
+    )
+  }
+
   return (
     <div className="min-h-screen bg-black text-white flex items-center justify-center p-6 font-sans relative overflow-hidden">
       {/* Background Ambience */}
@@ -126,7 +155,9 @@ export default function SignupPage() {
             <h1 className="text-7xl font-heading font-black tracking-tighter uppercase leading-none italic text-white text-gradient">
               Join <span className="text-white">Empire.</span>
             </h1>
-            <p className="text-white/30 font-black text-[10px] tracking-[0.4em] uppercase italic">Deployment Access for {inviteRole === 'setter' ? 'Setter Node' : inviteRole} Authorization</p>
+            <p className="text-white/30 font-black text-[10px] tracking-[0.4em] uppercase italic">
+              Deployment Access for {inviteInfo?.role === 'setter' ? 'Setter Node' : inviteInfo?.role} Authorization
+            </p>
           </div>
         </div>
 
@@ -173,9 +204,9 @@ export default function SignupPage() {
               <input 
                 type="email" 
                 placeholder="NEXUS IDENTITY (EMAIL)" 
-                disabled={isEmailPredefined}
+                disabled
                 value={email}
-                onChange={(e) => setEmail(e.target.value)}
+                onChange={() => undefined}
                 className="w-full bg-black/40 border border-white/5 rounded-2xl py-6 pl-16 pr-8 text-[12px] font-black tracking-widest uppercase focus:border-white focus:bg-white/10 outline-none transition-all placeholder:text-white/20 text-white"
               />
             </div>

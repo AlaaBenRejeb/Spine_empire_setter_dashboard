@@ -53,24 +53,24 @@ export default function SetterDashboardContent() {
   const revenue = liveMetrics.projectedRevenue || 0;
   const conversionRate = liveMetrics.conversionRate || 0;
 
-  const prevActiveLeadEmail = useRef<string | null>(null);
+  const prevActiveLeadId = useRef<string | null>(null);
 
   useEffect(() => {
     // 1. Auto-save current notes for the PREVIOUS lead before switching
-    if (prevActiveLeadEmail.current && prevActiveLeadEmail.current !== activeLead?.Email) {
-      const existingLead = leadNotes[prevActiveLeadEmail.current];
+    if (prevActiveLeadId.current && prevActiveLeadId.current !== activeLead?.id) {
+      const existingLead = leadNotes[prevActiveLeadId.current];
       const currentStatus = existingLead?.status || "called";
-      updateLeadNote(prevActiveLeadEmail.current, { status: currentStatus, comment: noteText });
+      updateLeadNote(prevActiveLeadId.current, { status: currentStatus, comment: noteText });
     }
 
     // 2. Load notes for the NEW active lead
     if (activeLead) {
-      setNoteText(leadNotes[activeLead.Email]?.comment || "");
-      prevActiveLeadEmail.current = activeLead.Email;
+      setNoteText(leadNotes[activeLead.id]?.comment || "");
+      prevActiveLeadId.current = activeLead.id;
     } else {
-      prevActiveLeadEmail.current = null;
+      prevActiveLeadId.current = null;
     }
-  }, [activeLead?.Email]);
+  }, [activeLead?.id]);
 
   const handleStatusUpdate = (status: string) => {
     if (activeLead) {
@@ -78,7 +78,7 @@ export default function SetterDashboardContent() {
       if (status === "booked") {
         updates.scheduled_time = `${scheduledDate} @ ${formatTime12Hour(scheduledTime)}`; 
       }
-      updateLeadNote(activeLead.Email, updates);
+      updateLeadNote(activeLead.id, updates);
     }
   };
 
@@ -181,7 +181,7 @@ export default function SetterDashboardContent() {
            <AnimatePresence mode="wait">
              {activeLead ? (
                <motion.div 
-                 key={activeLead.Email}
+                 key={activeLead.id}
                  initial={{ opacity: 0, x: 20 }}
                  animate={{ opacity: 1, x: 0 }}
                  exit={{ opacity: 0, x: 20 }}
@@ -208,8 +208,8 @@ export default function SetterDashboardContent() {
                      ].map((btn) => (
                        <button 
                          key={btn.id}
-                         onClick={() => btn.id === 'reset' ? updateLeadNote(activeLead.Email, { status: 'new', comment: '' }) : handleStatusUpdate(btn.id)}
-                         className={`flex flex-col items-center justify-center gap-1.5 p-3 rounded-lg border transition-all duration-300 ${leadNotes[activeLead.Email]?.status === btn.id ? btn.color + ' border-transparent' : 'bg-transparent border-white/5 hover:border-white/20 text-white/40 hover:text-white'}`}
+                         onClick={() => btn.id === 'reset' ? updateLeadNote(activeLead.id, { status: 'new', comment: '' }) : handleStatusUpdate(btn.id)}
+                         className={`flex flex-col items-center justify-center gap-1.5 p-3 rounded-lg border transition-all duration-300 ${leadNotes[activeLead.id]?.status === btn.id ? btn.color + ' border-transparent' : 'bg-transparent border-white/5 hover:border-white/20 text-white/40 hover:text-white'}`}
                        >
                           <btn.icon size={18} strokeWidth={2.5} />
                           <span className="text-[8px] font-black uppercase tracking-widest">{btn.label}</span>
@@ -229,7 +229,7 @@ export default function SetterDashboardContent() {
                      <textarea 
                        value={noteText}
                        onChange={(e) => setNoteText(e.target.value)}
-                       onBlur={() => handleStatusUpdate(leadNotes[activeLead.Email]?.status || "called")}
+                       onBlur={() => handleStatusUpdate(leadNotes[activeLead.id]?.status || "called")}
                        placeholder="Log intelligence..."
                        className="flex-1 bg-white/5 border border-white/10 p-4 rounded-lg text-xs font-medium text-white placeholder:text-white/10 focus:border-white/20 outline-none transition-all resize-none custom-scrollbar min-h-0"
                      />
