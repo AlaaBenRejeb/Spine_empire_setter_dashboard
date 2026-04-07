@@ -349,7 +349,7 @@ export function CRMProvider({ children }: { children: React.ReactNode }) {
     try {
       const { data: existingLead, error: existingLeadError } = await supabase
         .from("leads")
-        .select("metadata")
+        .select("metadata, closer_id")
         .eq("id", leadId)
         .maybeSingle();
 
@@ -357,18 +357,54 @@ export function CRMProvider({ children }: { children: React.ReactNode }) {
         throw existingLeadError;
       }
 
+      let bookedCloserId: string | null = null;
+      if (nextStatus === "booked") {
+        bookedCloserId = existingLead?.closer_id || assignedCloserId;
+
+        if (!bookedCloserId && user) {
+          const { data: mapping } = await supabase
+            .from("setter_closer_mapping")
+            .select("closer_id")
+            .eq("setter_id", user.id)
+            .maybeSingle();
+          bookedCloserId = mapping?.closer_id || null;
+        }
+
+        if (!bookedCloserId) {
+          setLeadNotes((prev) => {
+            const next = { ...prev };
+            if (previousEntry) {
+              next[leadId] = previousEntry;
+            } else {
+              delete next[leadId];
+            }
+            if (notesStorageKey) {
+              localStorage.setItem(notesStorageKey, JSON.stringify(next));
+            }
+            return next;
+          });
+          console.warn(`⚠️ Lead ${leadId} cannot be marked booked without a mapped closer. Configure Flow Matrix first.`);
+          return;
+        }
+      }
+
       const mergedMetadata = {
         ...(existingLead?.metadata || {}),
         ...optimisticEntry,
       };
 
+      const updatePayload: Record<string, any> = {
+        status: optimisticEntry.status,
+        setter_id: user?.id,
+        metadata: mergedMetadata,
+      };
+      if (bookedCloserId) {
+        updatePayload.closer_id = bookedCloserId;
+      }
+
       const { data, error } = await supabase
         .from("leads")
-        .update({
-          status: optimisticEntry.status,
-          setter_id: user?.id,
-          metadata: mergedMetadata,
-        })
+        .update(updatePayload)
         .eq("id", leadId)
         .select();
 
@@ -396,34 +432,6 @@ export function CRMProvider({ children }: { children: React.ReactNode }) {
         }
         return next;
       });
-
-      // Automatic Handoff to Closer
-      if (nextStatus === "booked") {
-        let closerId = assignedCloserId;
-
-        if (!closerId && user) {
-          const { data: mapping } = await supabase
-            .from("setter_closer_mapping")
-            .select("closer_id")
-            .eq("setter_id", user.id)
-            .maybeSingle();
-          closerId = mapping?.closer_id;
-        }
-
-        if (closerId) {
-          const { error: handoffError } = await supabase
-            .from("leads")
-            .update({ closer_id: closerId })
-            .eq("id", leadId);
-          if (handoffError) {
-            console.error(`❌ HANDOFF FAILED: Lead ${leadId} booked but not routed to Closer ${closerId}:`, handoffError.message);
-          } else {
-            console.log(`📡 Flow Matrix: Routed lead ${leadId} → Closer ${closerId}`);
-          }
-        } else {
-          console.warn(`⚠️ Lead booked but no Closer assigned in Flow Matrix for Setter ${user?.id}. Configure mapping in Admin Ops.`);
-        }
-      }
     } catch (err) {
       setLeadNotes((prev) => {
         const next = { ...prev };
