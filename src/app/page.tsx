@@ -30,6 +30,7 @@ import AddLeadModal from "@/components/AddLeadModal";
 import { useCRM } from "@/context/CRMContext";
 import { useState, useEffect, useRef } from "react";
 import { useAuth } from "@/context/AuthContext";
+import Image from "next/image";
 
 function formatTime12Hour(time24: string) {
   if (!time24) return "09:00 AM";
@@ -52,25 +53,37 @@ export default function SetterDashboardContent() {
   const powerScore = liveMetrics.powerScore || 0;
   const revenue = liveMetrics.projectedRevenue || 0;
   const conversionRate = liveMetrics.conversionRate || 0;
+  const activeLeadId = activeLead?.id ?? null;
 
   const prevActiveLeadId = useRef<string | null>(null);
+  const noteTextRef = useRef(noteText);
+  const leadNotesRef = useRef(leadNotes);
+
+  useEffect(() => {
+    noteTextRef.current = noteText;
+  }, [noteText]);
+
+  useEffect(() => {
+    leadNotesRef.current = leadNotes;
+  }, [leadNotes]);
 
   useEffect(() => {
     // 1. Auto-save current notes for the PREVIOUS lead before switching
-    if (prevActiveLeadId.current && prevActiveLeadId.current !== activeLead?.id) {
-      const existingLead = leadNotes[prevActiveLeadId.current];
+    if (prevActiveLeadId.current && prevActiveLeadId.current !== activeLeadId) {
+      const previousLeadId = prevActiveLeadId.current;
+      const existingLead = leadNotesRef.current[previousLeadId];
       const currentStatus = existingLead?.status || "called";
-      updateLeadNote(prevActiveLeadId.current, { status: currentStatus, comment: noteText });
+      updateLeadNote(previousLeadId, { status: currentStatus, comment: noteTextRef.current });
     }
 
     // 2. Load notes for the NEW active lead
-    if (activeLead) {
-      setNoteText(leadNotes[activeLead.id]?.comment || "");
-      prevActiveLeadId.current = activeLead.id;
+    if (activeLeadId) {
+      setNoteText(leadNotesRef.current[activeLeadId]?.comment || "");
+      prevActiveLeadId.current = activeLeadId;
     } else {
       prevActiveLeadId.current = null;
     }
-  }, [activeLead?.id]);
+  }, [activeLeadId, updateLeadNote]);
 
   const handleStatusUpdate = (status: string) => {
     if (activeLead) {
@@ -97,7 +110,7 @@ export default function SetterDashboardContent() {
       <div className="hidden lg:flex justify-between items-center bg-white/5 border border-white/10 p-4 rounded-xl backdrop-blur-md shrink-0">
         <div className="flex items-center gap-3">
           <div className="w-8 h-8 bg-white rounded-lg flex items-center justify-center p-1.5">
-            <img src="/logo.png" alt="Empire" className="w-full h-full object-contain" />
+            <Image src="/logo.png" alt="Empire" className="w-full h-full object-contain" width={24} height={24} />
           </div>
           <div>
             <h1 className="text-base font-bold tracking-tight text-white uppercase italic leading-tight">Revenue Engine</h1>

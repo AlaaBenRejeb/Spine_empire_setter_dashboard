@@ -3,6 +3,7 @@
 import { useEffect, useState } from "react"
 import { useRouter, useSearchParams } from "next/navigation"
 import { createClient } from "@/lib/supabase/client"
+import { verifyInvitationRpc } from "@/lib/supabase/invitationRpc"
 import { motion } from "framer-motion"
 import { Shield, AlertCircle, Loader2 } from "lucide-react"
 
@@ -24,8 +25,7 @@ export default function JoinPage() {
 
     const verifyToken = async () => {
       try {
-        const { data, error: fetchError } = await supabase
-          .rpc('verify_invitation', { p_token: token });
+        const { data, error: fetchError } = await verifyInvitationRpc(supabase, token);
 
         const invite = Array.isArray(data) ? data[0] : data;
 

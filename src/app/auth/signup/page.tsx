@@ -3,6 +3,7 @@
 import { useState, useEffect } from "react"
 import { useRouter, useSearchParams } from "next/navigation"
 import { createClient } from "@/lib/supabase/client"
+import { consumeInvitationRpc, verifyInvitationRpc } from "@/lib/supabase/invitationRpc"
 import { motion } from "framer-motion"
 import { Mail, Lock, User, ChevronRight, Loader2, CheckCircle2 } from "lucide-react"
 
@@ -31,8 +32,7 @@ export default function SignupPage() {
 
     const verifyInvite = async () => {
       setValidatingInvite(true)
-      const { data, error: verifyError } = await supabase
-        .rpc('verify_invitation', { p_token: token })
+      const { data, error: verifyError } = await verifyInvitationRpc(supabase, token)
 
       const invite = Array.isArray(data) ? data[0] : data
       if (verifyError || !invite) {
@@ -52,6 +52,11 @@ export default function SignupPage() {
 
   const handleSignup = async (e: React.FormEvent) => {
     e.preventDefault()
+    if (!token) {
+      setError("INVITATION TOKEN MISSING.")
+      return
+    }
+
     if (!inviteInfo) {
       setError("INVITATION CONTEXT NOT VERIFIED.")
       return
@@ -82,11 +87,11 @@ export default function SignupPage() {
 
       if (authData.user) {
         // 2. Atomically consume invitation + assign secure role from DB invite record
-        const { error: consumeError } = await supabase.rpc('consume_invitation', {
-          p_token: token,
-          p_user_id: authData.user.id,
-          p_first_name: firstName,
-          p_last_name: lastName
+        const { error: consumeError } = await consumeInvitationRpc(supabase, {
+          token,
+          userId: authData.user.id,
+          firstName,
+          lastName
         })
 
         if (consumeError) {

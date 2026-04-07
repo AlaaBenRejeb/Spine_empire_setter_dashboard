@@ -1,6 +1,6 @@
 "use client";
 
-import React, { createContext, useContext, useEffect, useState, useRef } from "react";
+import React, { createContext, useContext, useEffect, useState, useRef, useCallback } from "react";
 import { createClient } from "@/lib/supabase/client";
 import UnifiedLogin from "@/components/UnifiedLogin";
 import OnboardingPage from "@/components/OnboardingPage";
@@ -39,7 +39,7 @@ export function AuthProvider({
 
   const isSuperadmin = profile?.role === 'superadmin';
 
-  const checkPortalAccess = (userProfile: any) => {
+  const checkPortalAccess = useCallback((userProfile: any) => {
     if (userProfile?.role === 'superadmin') return;
     if (!userProfile) return;
     if (typeof window !== 'undefined' && (window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1')) return;
@@ -61,9 +61,9 @@ export function AuthProvider({
         window.location.href = targetUrl;
       }
     }
-  };
+  }, [portalType]);
 
-  const syncProfile = async (session: any, source: string, timerId: string, isMounted: boolean) => {
+  const syncProfile = useCallback(async (session: any, source: string, timerId: string, isMounted: boolean) => {
     const userId = session?.user?.id;
     if (!userId) {
       setUser(null);
@@ -102,7 +102,7 @@ export function AuthProvider({
       syncLockRef.current = null;
       setLoading(false);
     }
-  };
+  }, [supabase, checkPortalAccess]);
 
   useEffect(() => {
     const timerId = `AuthSync-${Math.random().toString(36).slice(2, 6)}`;
@@ -128,7 +128,7 @@ export function AuthProvider({
       isMounted = false;
       subscription.unsubscribe();
     };
-  }, [supabase]);
+  }, [supabase, syncProfile]);
 
   useEffect(() => {
     if (!loading) return;
