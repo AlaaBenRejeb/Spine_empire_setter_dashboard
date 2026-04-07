@@ -91,7 +91,7 @@ BEGIN
     v_power_score,
     NOW()
   )
-  ON CONFLICT ON CONSTRAINT profile_period_unique
+  ON CONFLICT ON CONSTRAINT profile_role_period_unique
   DO UPDATE SET
     role = 'setter',
     bookings = EXCLUDED.bookings,
@@ -176,7 +176,7 @@ BEGIN
     v_power_score,
     NOW()
   )
-  ON CONFLICT ON CONSTRAINT profile_period_unique
+  ON CONFLICT ON CONSTRAINT profile_role_period_unique
   DO UPDATE SET
     role = 'closer',
     bookings = EXCLUDED.bookings,
@@ -299,7 +299,7 @@ SELECT
 FROM public.leads
 WHERE setter_id IS NOT NULL
 GROUP BY setter_id
-ON CONFLICT ON CONSTRAINT profile_period_unique
+ON CONFLICT ON CONSTRAINT profile_role_period_unique
 DO UPDATE SET
   role = 'setter',
   bookings = EXCLUDED.bookings,
@@ -389,7 +389,7 @@ SELECT
 FROM public.leads
 WHERE closer_id IS NOT NULL
 GROUP BY closer_id
-ON CONFLICT ON CONSTRAINT profile_period_unique
+ON CONFLICT ON CONSTRAINT profile_role_period_unique
 DO UPDATE SET
   role = 'closer',
   bookings = EXCLUDED.bookings,
