@@ -69,18 +69,22 @@ export default function OnboardingPage({ user, onComplete }: { user: any, onComp
     setLoading(true);
     setError(null);
     try {
-      const { error: upsertError } = await supabase
+      const { data: updatedProfile, error: updateError } = await supabase
         .from('profiles')
-        .upsert({
-          id: user.id,
-          first_name: firstName,
-          last_name: lastName,
-          city: city,
-          role: 'setter',
+        .update({
+          first_name: firstName.trim(),
+          last_name: lastName.trim(),
+          city: city.trim(),
           updated_at: new Date().toISOString(),
-        });
+        })
+        .eq('id', user.id)
+        .select('id')
+        .maybeSingle();
 
-      if (upsertError) throw upsertError;
+      if (updateError) throw updateError;
+      if (!updatedProfile) {
+        throw new Error("PROFILE INITIALIZATION BLOCKED. CONTACT ADMIN TO REISSUE INVITATION.");
+      }
       
       onComplete();
     } catch (err: any) {
