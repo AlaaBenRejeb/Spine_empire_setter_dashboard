@@ -95,6 +95,15 @@ export default function SetterDashboardContent() {
     }
   };
 
+  const handleCalledDispositionUpdate = (disposition: "hot" | "cold" | "followup") => {
+    if (!activeLead) return;
+    updateLeadNote(activeLead.id, {
+      status: "called",
+      called_disposition: disposition,
+      comment: noteText,
+    });
+  };
+
   const stats = [
     { label: "Target Market", value: (totalLeadsCount || 0).toLocaleString(), icon: <Target size={18} />, desc: "Total Pool" },
     { label: "Power Score", value: powerScore, icon: <Activity size={18} />, desc: "Intel Score" },
@@ -210,6 +219,7 @@ export default function SetterDashboardContent() {
                      </span>
                      <h2 className="text-2xl md:text-3xl font-black tracking-tighter leading-tight uppercase italic text-white truncate pr-10">{activeLead["Practice Name"]}</h2>
                      <p className="text-[9px] text-white/20 uppercase tracking-[0.3em] font-bold">{activeLead.City} • {activeLead.Phone}</p>
+                     <p className="text-[9px] text-white/30 uppercase tracking-[0.25em] font-bold">SOURCE • {activeLead.Source || "manual"}</p>
                    </div>
 
                    <div className="grid grid-cols-4 gap-2 shrink-0">
@@ -228,6 +238,25 @@ export default function SetterDashboardContent() {
                           <span className="text-[8px] font-black uppercase tracking-widest">{btn.label}</span>
                        </button>
                      ))}
+                   </div>
+
+                   <div className="grid grid-cols-3 gap-2 shrink-0">
+                     {(["hot", "cold", "followup"] as const).map((disposition) => {
+                       const activeDisposition = leadNotes[activeLead.id]?.called_disposition || null;
+                       return (
+                         <button
+                           key={disposition}
+                           onClick={() => handleCalledDispositionUpdate(disposition)}
+                           className={`flex items-center justify-center gap-1.5 p-2 rounded-lg border transition-all duration-300 text-[8px] font-black uppercase tracking-widest ${
+                             activeDisposition === disposition
+                               ? "bg-yellow-500 text-black border-yellow-500"
+                               : "bg-transparent border-white/10 text-white/50 hover:text-white hover:border-yellow-500/50"
+                           }`}
+                         >
+                           {disposition}
+                         </button>
+                       );
+                     })}
                    </div>
 
                    <div className="flex flex-col gap-3 flex-1 min-h-0">

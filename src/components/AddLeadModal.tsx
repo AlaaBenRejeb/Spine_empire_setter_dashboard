@@ -9,6 +9,17 @@ const REVENUE_OPTIONS = [
   "Under $20k/mo", "$20k - $50k/mo", "$50k - $100k/mo", "$100k+/mo", "Unknown"
 ];
 
+const SOURCE_OPTIONS = [
+  { value: "manual", label: "Manual" },
+  { value: "yellowpages", label: "Yellow Pages" },
+  { value: "google", label: "Google Search" },
+  { value: "facebook", label: "Facebook" },
+  { value: "instagram", label: "Instagram" },
+  { value: "referral", label: "Referral" },
+  { value: "website", label: "Website Form" },
+  { value: "other", label: "Other" },
+];
+
 export default function AddLeadModal({ isOpen, onClose }: { isOpen: boolean; onClose: () => void }) {
   const { addLead } = useCRM();
   const [isSubmitting, setIsSubmitting] = useState(false);
@@ -21,6 +32,8 @@ export default function AddLeadModal({ isOpen, onClose }: { isOpen: boolean; onC
     email: "",
     revenue_range: "Unknown",
     main_challenge: "",
+    source: "manual",
+    source_custom: "",
   });
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -29,11 +42,18 @@ export default function AddLeadModal({ isOpen, onClose }: { isOpen: boolean; onC
 
     setIsSubmitting(true);
     try {
-      await addLead(form);
+      const resolvedSource = form.source === "other"
+        ? (form.source_custom.trim() || "manual")
+        : form.source;
+
+      await addLead({
+        ...form,
+        source: resolvedSource,
+      });
       // Reset form
       setForm({
         business_name: "", contact_name: "",
-        city: "", state: "", phone: "", email: "", revenue_range: "Unknown", main_challenge: "",
+        city: "", state: "", phone: "", email: "", revenue_range: "Unknown", main_challenge: "", source: "manual", source_custom: "",
       });
       onClose();
     } catch (err) {
@@ -190,6 +210,36 @@ export default function AddLeadModal({ isOpen, onClose }: { isOpen: boolean; onC
                   rows={3}
                   className="w-full bg-white/5 border border-white/10 rounded-xl py-4 px-5 text-sm font-bold placeholder:opacity-20 placeholder:italic focus:border-green-500 outline-none transition-all resize-none"
                 />
+              </div>
+
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div className="flex flex-col gap-2">
+                  <label className="text-[10px] font-black uppercase tracking-widest opacity-40">Lead Source</label>
+                  <select
+                    value={form.source}
+                    onChange={(e) => update("source", e.target.value)}
+                    className="w-full bg-white/5 border border-white/10 rounded-xl py-4 px-5 text-sm font-bold tracking-widest uppercase focus:border-green-500 outline-none transition-all appearance-none cursor-pointer"
+                  >
+                    {SOURCE_OPTIONS.map((option) => (
+                      <option key={option.value} value={option.value} className="bg-black">
+                        {option.label}
+                      </option>
+                    ))}
+                  </select>
+                </div>
+
+                <div className="flex flex-col gap-2">
+                  <label className="text-[10px] font-black uppercase tracking-widest opacity-40">
+                    {form.source === "other" ? "Custom Source" : "Source Notes"}
+                  </label>
+                  <input
+                    type="text"
+                    value={form.source_custom}
+                    onChange={(e) => update("source_custom", e.target.value)}
+                    placeholder={form.source === "other" ? "e.g. conference list" : "optional"}
+                    className="w-full bg-white/5 border border-white/10 rounded-xl py-4 px-5 text-sm font-bold tracking-widest focus:border-green-500 outline-none transition-all placeholder:opacity-20"
+                  />
+                </div>
               </div>
 
               {/* Submit */}

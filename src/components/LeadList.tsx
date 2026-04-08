@@ -1,14 +1,15 @@
 "use client";
 
 import { useState, useMemo } from "react";
-import { Search, Phone, Star, MapPin, ChevronRight, MessageSquare, Briefcase, Zap, Filter, User } from "lucide-react";
+import { Search, Phone, Star, MapPin, ChevronRight, MessageSquare, Briefcase, User } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
 import { useCRM } from "@/context/CRMContext";
 
 export default function LeadList() {
   const [search, setSearch] = useState("");
   const [statusFilter, setStatusFilter] = useState<"all" | "new" | "called" | "booked">("all");
-  const { activeLead, setActiveLead, leadNotes, updateLeadNote, leads } = useCRM();
+  const [calledDispositionFilter, setCalledDispositionFilter] = useState<"all" | "hot" | "cold" | "followup">("all");
+  const { activeLead, setActiveLead, leadNotes, leads, startOutboundCall } = useCRM();
 
   const isSetterArchivedStatus = (status: string) => (
     status === "won" ||
@@ -26,17 +27,24 @@ export default function LeadList() {
                            lead.City.toLowerCase().includes(search.toLowerCase());
       
       if (!matchesSearch) return false;
-      const status = leadNotes[lead.id]?.status || "new";
+      const notes = leadNotes[lead.id];
+      const status = notes?.status || "new";
 
       // Sold/closed outcomes are archived from the setter working list.
       // If closer resets a deal back to booked, it reappears automatically.
       if (isSetterArchivedStatus(status)) return false;
 
       if (statusFilter === "all") return true;
-      
-      return status === statusFilter;
+
+      if (status !== statusFilter) return false;
+
+      if (statusFilter === "called" && calledDispositionFilter !== "all") {
+        return (notes?.called_disposition || null) === calledDispositionFilter;
+      }
+
+      return true;
     });
-  }, [search, leads, leadNotes, statusFilter]);
+  }, [search, leads, leadNotes, statusFilter, calledDispositionFilter]);
 
   return (
     <div className="flex flex-col h-full gap-8">
@@ -72,6 +80,24 @@ export default function LeadList() {
         </div>
       </div>
 
+      {statusFilter === "called" && (
+        <div className="flex items-center gap-2 overflow-x-auto pb-1 no-scrollbar">
+          {(["all", "hot", "cold", "followup"] as const).map((disposition) => (
+            <button
+              key={disposition}
+              onClick={() => setCalledDispositionFilter(disposition)}
+              className={`px-4 py-2.5 rounded-lg font-bold text-[9px] uppercase tracking-widest transition-all whitespace-nowrap border ${
+                calledDispositionFilter === disposition
+                  ? "bg-yellow-500 text-black border-yellow-500"
+                  : "bg-background border-glass-border text-muted-foreground hover:border-yellow-500/60"
+              }`}
+            >
+              {disposition}
+            </button>
+          ))}
+        </div>
+      )}
+
       {/* Grid of Minimal Lead Cards */}
       <div className="flex-1 overflow-y-auto pr-2 space-y-4 hide-scrollbar">
         <AnimatePresence mode="popLayout">
@@ -79,6 +105,7 @@ export default function LeadList() {
              const isActive = activeLead?.id === lead.id;
              const notes = leadNotes[lead.id];
              const status = notes?.status || "new";
+             const calledDisposition = notes?.called_disposition || null;
              const reviews = parseInt(lead["Google Reviews"]?.toString() || "0");
 
              return (
@@ -118,14 +145,22 @@ export default function LeadList() {
                                   </div>
                                 )}
                                 {status === 'called' && (
-                                  <div className="px-2 py-0.5 bg-amber-500/10 border border-amber-500/20 rounded text-[7px] font-black text-amber-500 uppercase tracking-widest whitespace-nowrap">
-                                    Called
-                                  </div>
+                                  <>
+                                    <div className="px-2 py-0.5 bg-amber-500/10 border border-amber-500/20 rounded text-[7px] font-black text-amber-500 uppercase tracking-widest whitespace-nowrap">
+                                      Called
+                                    </div>
+                                    {calledDisposition && (
+                                      <div className="px-2 py-0.5 bg-black/10 border border-glass-border rounded text-[7px] font-black text-muted-foreground uppercase tracking-widest whitespace-nowrap">
+                                        {calledDisposition}
+                                      </div>
+                                    )}
+                                  </>
                                 )}
                              </div>
                              <div className="flex items-center gap-4 text-[10px] font-bold text-muted-foreground uppercase tracking-widest leading-none">
                                 <span className="flex items-center gap-1.5"><MapPin size={12} /> {lead.City}</span>
                                 <span className="flex items-center gap-1.5 opacity-80"><User size={12} /> {lead["First Name"] || "Owner"}</span>
+                                <span className="flex items-center gap-1.5 opacity-60">{lead.Source || "manual"}</span>
                              </div>
                           </div>
                        </div>
@@ -135,17 +170,15 @@ export default function LeadList() {
                              <MessageSquare size={16} className="text-muted-foreground opacity-40" />
                           )}
 
-                          <a 
-                            href={`https://voice.google.com/u/0/calls?a=nc,%2B1${lead.Phone.replace(/\D/g, '')}`}
-                            target="_blank"
+                          <button
                             className="flex-1 md:flex-none bg-black text-white dark:bg-white dark:text-black font-bold uppercase text-[10px] tracking-widest px-8 py-4 rounded-xl flex items-center gap-3 hover:translate-y-[-1px] transition-all shadow-sm active:translate-y-0"
-                            onClick={(e) => {
-                                e.stopPropagation();
-                                updateLeadNote(lead.id, { status: "called" });
+                            onClick={async (e) => {
+                              e.stopPropagation();
+                              await startOutboundCall(lead);
                             }}
                           >
                              <Phone size={16} strokeWidth={2.5} /> CALL 
-                          </a>
+                          </button>
 
                           <div className="p-4 bg-secondary rounded-xl border border-glass-border hover:border-black transition-all">
                              <ChevronRight size={20} className="text-muted-foreground" />
