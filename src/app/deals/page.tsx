@@ -759,8 +759,8 @@ export default function DealsPage() {
         </div>
       </header>
 
-      <div className={`flex-1 min-h-0 px-6 pb-8 md:px-10 ${expandedLead ? "lg:grid lg:grid-cols-[minmax(0,1fr)_420px] lg:gap-6" : ""}`}>
-        <div className="relative min-h-0" onClick={(event) => {
+      <div className={`flex-1 h-full min-h-0 px-6 pb-8 md:px-10 ${expandedLead ? "lg:grid lg:grid-cols-[minmax(0,1fr)_420px] lg:gap-6" : ""}`}>
+        <div className="relative h-full min-h-0" onClick={(event) => {
           if (event.target === event.currentTarget && expandedLead) {
             void closeLeadPanel();
           }
@@ -770,7 +770,7 @@ export default function DealsPage() {
           <div
             ref={boardRef}
             onWheel={handleBoardWheel}
-            className="flex h-full gap-5 overflow-x-auto overflow-y-hidden pb-4 pt-2 custom-scrollbar [scrollbar-gutter:stable_both-edges]"
+            className="flex h-full min-h-0 items-stretch gap-5 overflow-x-auto overflow-y-hidden pb-4 pt-2 custom-scrollbar [scrollbar-gutter:stable_both-edges]"
           >
             {columnsToRender.map((column, columnIndex) => {
               const visibleLeads = visibleLeadsByStatus[column.id];
@@ -780,7 +780,7 @@ export default function DealsPage() {
               return (
                 <div
                   key={column.id}
-                  className={`flex min-w-[320px] max-w-[360px] flex-shrink-0 flex-col gap-4 xl:min-w-[340px] ${
+                  className={`flex h-full min-h-0 min-w-[320px] max-w-[360px] flex-shrink-0 flex-col gap-4 xl:min-w-[340px] ${
                     columnsToRender.length === 1 ? "w-full max-w-none" : ""
                   }`}
                 >
@@ -802,7 +802,7 @@ export default function DealsPage() {
 
                   <div
                     data-kanban-lane-scroll="true"
-                    className={`flex-1 overflow-y-auto overscroll-y-contain rounded-[2rem] border bg-[linear-gradient(180deg,rgba(255,255,255,0.04),rgba(255,255,255,0.015))] p-4 shadow-[inset_0_1px_0_rgba(255,255,255,0.03)] custom-scrollbar ${column.border}`}
+                    className={`flex-1 min-h-0 overflow-y-auto overscroll-y-contain rounded-[2rem] border bg-[linear-gradient(180deg,rgba(255,255,255,0.04),rgba(255,255,255,0.015))] p-4 shadow-[inset_0_1px_0_rgba(255,255,255,0.03)] custom-scrollbar ${column.border}`}
                   >
                     <div className="flex flex-col gap-4">
                       {visibleLeads.map((lead: any, index: number) => {
