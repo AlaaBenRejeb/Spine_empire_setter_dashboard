@@ -23,10 +23,10 @@ export function useKanbanScroll() {
       if (Math.abs(event.deltaX) > Math.abs(event.deltaY)) return;
 
       const target = event.target as HTMLElement | null;
+      if (isInteractiveTarget(target)) return;
       const lane = target?.closest("[data-kanban-lane-scroll='true']") as HTMLElement | null;
 
       if (!lane) {
-        if (isInteractiveTarget(target)) return;
         event.preventDefault();
         panBoard(event.deltaY);
         return;
@@ -39,15 +39,17 @@ export function useKanbanScroll() {
         return;
       }
 
-      const scrollingUp = event.deltaY < 0;
-      const scrollingDown = event.deltaY > 0;
-      const atTop = lane.scrollTop <= EDGE_TOLERANCE;
-      const atBottom = lane.scrollTop + lane.clientHeight >= lane.scrollHeight - EDGE_TOLERANCE;
+      const maxScrollTop = Math.max(lane.scrollHeight - lane.clientHeight, 0);
+      const nextScrollTop = Math.min(Math.max(lane.scrollTop + event.deltaY, 0), maxScrollTop);
 
-      if ((scrollingUp && atTop) || (scrollingDown && atBottom)) {
-        event.preventDefault();
-        panBoard(event.deltaY);
+      event.preventDefault();
+
+      if (Math.abs(nextScrollTop - lane.scrollTop) > EDGE_TOLERANCE) {
+        lane.scrollTop = nextScrollTop;
+        return;
       }
+
+      panBoard(event.deltaY);
     },
     [panBoard],
   );
