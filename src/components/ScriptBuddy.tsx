@@ -1,18 +1,18 @@
 "use client";
 
 import { useState, useMemo } from "react";
-import { MessageSquare, X, ChevronRight, Check, User, ShieldCheck, UserCheck, Terminal } from "lucide-react";
+import { X, ChevronRight, Check, User, ShieldCheck, UserCheck, Terminal } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
 
-export default function ScriptBuddy({ activeLead }: { activeLead: any }) {
+type ActiveLead = Record<string, string | number | null | undefined>;
+
+export default function ScriptBuddy({ activeLead }: { activeLead?: ActiveLead }) {
   const [isOpen, setIsOpen] = useState(false);
   const [currentStep, setCurrentStep] = useState(0);
   const [isGatekeeper, setIsGatekeeper] = useState(false);
 
   const script = useMemo(() => {
-    const name = activeLead?.["First Name"] || "the owner";
     const practice = activeLead?.["Practice Name"] || "the clinic";
-    const reviews = activeLead?.["Google Reviews"] || "under 76";
 
     if (isGatekeeper) {
       return [
@@ -24,10 +24,35 @@ export default function ScriptBuddy({ activeLead }: { activeLead: any }) {
     }
 
     return [
-      { label: "OPENING", content: `Hey, am I speaking with ${name}? Perfect — I’ll keep this brief. My name’s Alex. I work with chiropractors who want more consistency in new patient flow.` },
-      { label: "DIAGNOSTIC", content: `Quick question for you at ${practice} — are you getting most of your new patients from referrals, ads, or a mix? ... And is that actually predictable month to month, or does it fluctuate?` },
-      { label: "THE PROBLEM", content: `Makes sense. I noticed you currently have ${reviews} reviews. We help clinics tighten patient acquisition so you're not just relying on one source.` },
-      { label: "THE BOOKING", content: `If I could show you how that would look for ${practice} specifically, would you be open to a quick 10-minute call? I’ve got tomorrow at 11 AM or Thursday at 2 PM. Which works better?` }
+      {
+        label: "OPENER",
+        content:
+          "Hey quick one — this isn't a sales call.\nI noticed something about your clinic that's costing you patients.\nNot sure if you want me to tell you or not?\n\nPause.",
+      },
+      {
+        label: "THE PROBLEM",
+        content:
+          "You don't have a consistent patient acquisition system.\nSo your numbers depend on referrals, random ads, or slow days — which means revenue is unstable.\n\nPause again.\n\nLet them agree or react.",
+      },
+      {
+        label: "POSITION",
+        content:
+          "What I do is install a system that brings patients in weekly.\nIf it doesn't work, I don't get paid.",
+      },
+      {
+        label: "SOFT CLOSE",
+        content:
+          "If you want, I can show you how it works in 10 minutes.\nIf not, no problem.",
+      },
+      {
+        label: "IF THEY SAY YES",
+        content: "Perfect — I've got [time] or [time]. Which works?",
+      },
+      {
+        label: "IF THEY HESITATE",
+        content:
+          "\"I'm busy\"\n\nMakes sense — that's exactly why I'm suggesting 10 minutes.\nIf it's not useful, you hang up.",
+      },
     ];
   }, [activeLead, isGatekeeper]);
 
@@ -102,12 +127,12 @@ export default function ScriptBuddy({ activeLead }: { activeLead: any }) {
             </div>
 
             {/* Clean Script Engine - Resized Text */}
-            <div className="min-h-[180px] flex flex-col justify-center bg-black p-6 border-2 border-dashed border-glass-border rounded-xl relative">
+            <div className="min-h-[220px] max-h-[320px] overflow-y-auto flex flex-col justify-center bg-black p-6 border-2 border-dashed border-glass-border rounded-xl relative">
               <h3 className="text-[9px] text-muted-foreground uppercase font-black mb-5 tracking-widest opacity-60">
                  PHASE {currentStep + 1}: {script[currentStep].label}
               </h3>
-              <p className="text-white text-[22px] font-heading font-bold leading-tight uppercase italic text-center px-4">
-                 "{script[currentStep].content}"
+              <p className="whitespace-pre-line text-white text-[18px] font-heading font-bold leading-snug uppercase italic text-center px-2">
+                 &ldquo;{script[currentStep].content}&rdquo;
               </p>
             </div>
 
