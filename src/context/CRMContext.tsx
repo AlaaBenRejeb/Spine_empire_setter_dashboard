@@ -1,6 +1,6 @@
 "use client";
 
-import React, { createContext, useCallback, useContext, useEffect, useRef, useState } from "react";
+import React, { createContext, useCallback, useContext, useEffect, useMemo, useRef, useState } from "react";
 import { createClient } from "@/lib/supabase/client";
 
 const supabase = createClient();
@@ -9,7 +9,13 @@ import { useAuth } from "@/context/AuthContext";
 import { calculateSetterMetrics, SetterMetrics } from "@/lib/performanceUtils";
 import { normalizeDealValue } from "@/lib/dealValue";
 import { buildGoogleMapsUrl, resolveGoogleMapsUrl } from "@/lib/googleMaps";
-import { META_PRIORITY_STATUS, resolveMetaPriorityCreatedAt } from "@/lib/metaPriority";
+import {
+  META_PRIORITY_STATUS,
+  formatMetaPriorityAge,
+  getMetaPrioritySlaState,
+  isMetaPriorityLead,
+  resolveMetaPriorityCreatedAt,
+} from "@/lib/metaPriority";
 
 type InteractionKind = "call" | "sms" | "email";
 type CalledDisposition = "hot" | "cold" | "followup";
@@ -61,6 +67,26 @@ interface LeadWriteOptions {
   claimOrigin?: string;
 }
 
+export interface MetaPrioritySummary {
+  totalCount: number;
+  freshCount: number;
+  overdueCount: number;
+  escalatedCount: number;
+  newestLeadId: string | null;
+  newestLeadName: string | null;
+  newestLeadAgeLabel: string | null;
+  oldestWaitingLeadId: string | null;
+  oldestWaitingLeadName: string | null;
+  oldestWaitingAgeLabel: string | null;
+}
+
+export interface MetaPriorityLiveAlert {
+  leadId: string;
+  practiceName: string;
+  createdAt: string | null;
+  ageLabel: string;
+}
+
 interface CRMContextType {
   activeLead: any;
   setActiveLead: (lead: any) => void;
@@ -78,6 +104,9 @@ interface CRMContextType {
   isSyncing: boolean;
   interactions: LeadInteraction[];
   statusEvents: LeadStatusEvent[];
+  metaPrioritySummary: MetaPrioritySummary;
+  liveMetaPriorityAlert: MetaPriorityLiveAlert | null;
+  dismissMetaPriorityLiveAlert: () => void;
   recordInteraction: (input: RecordInteractionInput) => Promise<void>;
   startOutboundCall: (lead: any, opts?: { disposition?: CalledDisposition | null; note?: string; meta?: Record<string, any> }) => Promise<void>;
   logOutboundMessage: (lead: any, opts?: { kind?: "sms" | "email"; disposition?: CalledDisposition | null; note?: string; meta?: Record<string, any> }) => Promise<void>;
@@ -123,6 +152,19 @@ const buildLeadNoteEntry = (lead: any) => ({
   setter_id: lead.setter_id,
 });
 
+const EMPTY_META_PRIORITY_SUMMARY: MetaPrioritySummary = {
+  totalCount: 0,
+  freshCount: 0,
+  overdueCount: 0,
+  escalatedCount: 0,
+  newestLeadId: null,
+  newestLeadName: null,
+  newestLeadAgeLabel: null,
+  oldestWaitingLeadId: null,
+  oldestWaitingLeadName: null,
+  oldestWaitingAgeLabel: null,
+};
+
 export function CRMProvider({ children }: { children: React.ReactNode }) {
   const { user } = useAuth();
   const [activeLead, setActiveLead] = useState<any>(null);
@@ -137,8 +179,14 @@ export function CRMProvider({ children }: { children: React.ReactNode }) {
   const [isSyncing, setIsSyncing] = useState(false);
   const [interactions, setInteractions] = useState<LeadInteraction[]>([]);
   const [statusEvents, setStatusEvents] = useState<LeadStatusEvent[]>([]);
+  const [metaPriorityClock, setMetaPriorityClock] = useState(() => Date.now());
+  const [liveMetaPriorityAlert, setLiveMetaPriorityAlert] = useState<MetaPriorityLiveAlert | null>(null);
   const fetchedRef = useRef(false);
   const notesStorageKey = user?.id ? `spine-empire-lead-notes-${user.id}` : null;
+
+  const dismissMetaPriorityLiveAlert = useCallback(() => {
+    setLiveMetaPriorityAlert(null);
+  }, []);
 
   const upsertInteractionInState = (entry: LeadInteraction) => {
     setInteractions((prev) => {
@@ -333,6 +381,25 @@ export function CRMProvider({ children }: { children: React.ReactNode }) {
           return;
         }
 
+        if (
+          payload.eventType === "INSERT" &&
+          isMetaPriorityLead({
+            status: updated?.status,
+            source: updated?.metadata?.source,
+          })
+        ) {
+          const createdAt = resolveMetaPriorityCreatedAt(updated?.metadata, updated?.created_at);
+          setLiveMetaPriorityAlert({
+            leadId: updated.id,
+            practiceName:
+              updated?.business_name ||
+              updated?.contact_name ||
+              `Lead ${String(updated?.id || "").slice(0, 8)}`,
+            createdAt,
+            ageLabel: formatMetaPriorityAge(createdAt),
+          });
+        }
+
         const transformed = transformLead(updated);
 
         setLeadNotes((prev) => {
@@ -362,6 +429,28 @@ export function CRMProvider({ children }: { children: React.ReactNode }) {
       supabase.removeChannel(channel);
     };
   }, [removeLeadFromState, user, notesStorageKey]);
+
+  useEffect(() => {
+    const intervalId = window.setInterval(() => {
+      setMetaPriorityClock(Date.now());
+    }, 30000);
+
+    return () => {
+      window.clearInterval(intervalId);
+    };
+  }, []);
+
+  useEffect(() => {
+    if (!liveMetaPriorityAlert) return;
+
+    const timeoutId = window.setTimeout(() => {
+      setLiveMetaPriorityAlert(null);
+    }, 12000);
+
+    return () => {
+      window.clearTimeout(timeoutId);
+    };
+  }, [liveMetaPriorityAlert]);
 
   useEffect(() => {
     if (!user?.id) {
@@ -547,6 +636,50 @@ export function CRMProvider({ children }: { children: React.ReactNode }) {
     
     setLiveMetrics(hybridMetrics);
   }, [leads, leadNotes, user?.id, userPerformance]);
+
+  const metaPrioritySummary = useMemo<MetaPrioritySummary>(() => {
+    const queueLeads = leads
+      .map((lead) => {
+        const status = leadNotes[lead.id]?.status || lead.Status || "new";
+        if (status !== META_PRIORITY_STATUS) return null;
+        if (lead.Source !== "meta_lead_ad") return null;
+
+        const createdAt = resolveMetaPriorityCreatedAt(
+          { meta_priority_created_at: lead.MetaPriorityCreatedAt },
+          lead.CreatedAt,
+        );
+        const state = getMetaPrioritySlaState(createdAt, metaPriorityClock);
+
+        return {
+          id: lead.id,
+          practiceName: lead["Practice Name"] || lead["First Name"] || `Lead ${lead.id.slice(0, 8)}`,
+          createdAt,
+          state,
+          timestamp: createdAt ? new Date(createdAt).getTime() : 0,
+        };
+      })
+      .filter((lead): lead is NonNullable<typeof lead> => Boolean(lead));
+
+    if (queueLeads.length === 0) {
+      return EMPTY_META_PRIORITY_SUMMARY;
+    }
+
+    const newestLead = [...queueLeads].sort((a, b) => b.timestamp - a.timestamp)[0];
+    const oldestLead = [...queueLeads].sort((a, b) => a.timestamp - b.timestamp)[0];
+
+    return {
+      totalCount: queueLeads.length,
+      freshCount: queueLeads.filter((lead) => lead.state === "fresh").length,
+      overdueCount: queueLeads.filter((lead) => lead.state === "overdue").length,
+      escalatedCount: queueLeads.filter((lead) => lead.state === "escalated").length,
+      newestLeadId: newestLead?.id || null,
+      newestLeadName: newestLead?.practiceName || null,
+      newestLeadAgeLabel: newestLead ? formatMetaPriorityAge(newestLead.createdAt, metaPriorityClock) : null,
+      oldestWaitingLeadId: oldestLead?.id || null,
+      oldestWaitingLeadName: oldestLead?.practiceName || null,
+      oldestWaitingAgeLabel: oldestLead ? formatMetaPriorityAge(oldestLead.createdAt, metaPriorityClock) : null,
+    };
+  }, [leadNotes, leads, metaPriorityClock]);
 
   // 5. Intelligence Persistence Engine (Syncs Live Metrics to Database for Admin visibility) - REMOVED: Database Triggers now handle this source of truth exclusively to prevent synchronization drift.
 
@@ -980,6 +1113,9 @@ export function CRMProvider({ children }: { children: React.ReactNode }) {
         isSyncing,
         interactions,
         statusEvents,
+        metaPrioritySummary,
+        liveMetaPriorityAlert,
+        dismissMetaPriorityLiveAlert,
         recordInteraction,
         startOutboundCall,
         logOutboundMessage,

@@ -42,7 +42,20 @@ function formatTime12Hour(time24: string) {
 }
 
 export default function SetterDashboardContent() {
-  const { activeLead, setActiveLead, leadNotes, updateLeadNote, assignedCloserName, leads, totalLeadsCount, user, userPerformance, liveMetrics, isSyncing } = useCRM();
+  const {
+    activeLead,
+    setActiveLead,
+    leadNotes,
+    updateLeadNote,
+    assignedCloserName,
+    leads,
+    totalLeadsCount,
+    user,
+    userPerformance,
+    liveMetrics,
+    isSyncing,
+    metaPrioritySummary,
+  } = useCRM();
   const { loading } = useAuth();
   const [noteText, setNoteText] = useState("");
   const [scheduledDate, setScheduledDate] = useState(new Date().toISOString().split('T')[0]);
@@ -158,6 +171,35 @@ export default function SetterDashboardContent() {
           </div>
         </div>
       </div>
+
+      {metaPrioritySummary.totalCount > 0 && (
+        <div
+          className={`grid gap-3 rounded-2xl border p-4 backdrop-blur-md lg:grid-cols-[minmax(0,1fr)_auto] ${
+            metaPrioritySummary.escalatedCount > 0
+              ? "border-red-500/20 bg-red-500/10"
+              : metaPrioritySummary.overdueCount > 0
+                ? "border-amber-500/20 bg-amber-500/10"
+                : "border-emerald-500/20 bg-emerald-500/10"
+          }`}
+        >
+          <div className="flex flex-col gap-2">
+            <span className="text-[8px] font-black uppercase tracking-[0.32em] text-white/45">Meta Priority Watch</span>
+            <p className="text-sm font-black uppercase tracking-[0.16em] text-white">
+              {metaPrioritySummary.totalCount} live in shared queue • {metaPrioritySummary.freshCount} fresh • {metaPrioritySummary.overdueCount} overdue • {metaPrioritySummary.escalatedCount} escalated
+            </p>
+            <p className="text-[10px] font-bold uppercase tracking-[0.18em] text-white/55">
+              Oldest untouched: {metaPrioritySummary.oldestWaitingLeadName || "Shared queue"} • {metaPrioritySummary.oldestWaitingAgeLabel || "Just in"}
+            </p>
+          </div>
+
+          <a
+            href="/deals"
+            className="inline-flex items-center justify-center rounded-xl bg-white px-4 py-3 text-[10px] font-black uppercase tracking-[0.22em] text-black transition-transform hover:-translate-y-0.5 hover:bg-white/90"
+          >
+            Open Visual Pipeline
+          </a>
+        </div>
+      )}
 
       {/* Stats Grid - Ultra Compact */}
       <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 shrink-0">

@@ -22,7 +22,7 @@ import FollowUpModal from "@/components/FollowUpModal";
 import { useCRM } from "@/context/CRMContext";
 import { useKanbanScroll } from "@/hooks/useKanbanScroll";
 import { formatDealValueCurrency } from "@/lib/dealValue";
-import { getMetaPriorityAgeMs, getMetaPrioritySlaState, META_PRIORITY_STATUS } from "@/lib/metaPriority";
+import { formatMetaPriorityAge, getMetaPrioritySlaState, META_PRIORITY_STATUS } from "@/lib/metaPriority";
 
 const COLUMNS = [
   {
@@ -153,20 +153,6 @@ const formatRelativeTime = (value?: string | null) => {
   });
 };
 
-const formatMetaPriorityAge = (value?: string | null) => {
-  const ageMs = getMetaPriorityAgeMs(value);
-  const ageMinutes = Math.floor(ageMs / 60000);
-
-  if (ageMinutes < 1) return "Just in";
-  if (ageMinutes < 60) return `${ageMinutes}m waiting`;
-
-  const ageHours = Math.floor(ageMinutes / 60);
-  if (ageHours < 24) return `${ageHours}h waiting`;
-
-  const ageDays = Math.floor(ageHours / 24);
-  return `${ageDays}d waiting`;
-};
-
 const getPrioritySlaLabel = (value?: string | null) => {
   const state = getMetaPrioritySlaState(value);
   if (state === "escalated") return "Escalated";
@@ -223,7 +209,15 @@ const getStatusForLead = (leadNotes: Record<string, any>, leadId: string): Colum
 };
 
 export default function DealsPage() {
-  const { leads, leadNotes, interactions, updateLeadNote, startOutboundCall, logOutboundMessage } = useCRM();
+  const {
+    leads,
+    leadNotes,
+    interactions,
+    updateLeadNote,
+    startOutboundCall,
+    logOutboundMessage,
+    metaPrioritySummary,
+  } = useCRM();
   const { boardRef, handleBoardWheel, handleRailWheel } = useKanbanScroll();
   const [selectedLead, setSelectedLead] = useState<any>(null);
   const [isFollowUpOpen, setIsFollowUpOpen] = useState(false);
@@ -831,6 +825,34 @@ export default function DealsPage() {
               </div>
             )}
           </div>
+
+          {metaPrioritySummary.totalCount > 0 && (
+            <div
+              className={`rounded-[1.75rem] border p-4 shadow-[0_20px_50px_rgba(0,0,0,0.2)] ${
+                metaPrioritySummary.escalatedCount > 0
+                  ? "border-red-500/20 bg-red-500/10"
+                  : metaPrioritySummary.overdueCount > 0
+                    ? "border-amber-500/20 bg-amber-500/10"
+                    : "border-emerald-500/20 bg-emerald-500/10"
+              }`}
+            >
+              <div className="flex flex-col gap-3 xl:flex-row xl:items-center xl:justify-between">
+                <div className="flex flex-col gap-2">
+                  <span className="text-[9px] font-black uppercase tracking-[0.3em] text-white/45">Live Meta Queue Alert</span>
+                  <p className="text-sm font-black uppercase tracking-[0.18em] text-white">
+                    {metaPrioritySummary.totalCount} shared • {metaPrioritySummary.freshCount} fresh • {metaPrioritySummary.overdueCount} overdue • {metaPrioritySummary.escalatedCount} escalated
+                  </p>
+                  <p className="text-[10px] font-bold uppercase tracking-[0.18em] text-white/55">
+                    Oldest untouched: {metaPrioritySummary.oldestWaitingLeadName || "Shared queue"} • {metaPrioritySummary.oldestWaitingAgeLabel || "Just in"}
+                  </p>
+                </div>
+
+                <div className="inline-flex items-center rounded-full border border-white/10 bg-white/[0.08] px-4 py-2 text-[10px] font-black uppercase tracking-[0.2em] text-white/70">
+                  CRM live alerts active
+                </div>
+              </div>
+            </div>
+          )}
         </div>
       </header>
 

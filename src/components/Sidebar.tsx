@@ -5,6 +5,7 @@ import { usePathname } from "next/navigation";
 import { LayoutDashboard, PhoneCall, Calendar, BarChart3, Settings, LogOut, Briefcase, Zap, Presentation } from "lucide-react";
 import { motion } from "framer-motion";
 import { useAuth } from "@/context/AuthContext";
+import { useCRM } from "@/context/CRMContext";
 
 interface SidebarProps {
   isOpen?: boolean;
@@ -13,11 +14,25 @@ interface SidebarProps {
 
 export default function Sidebar({ isOpen, onClose }: SidebarProps) {
   const pathname = usePathname();
-  const { profile, signOut } = useAuth();
+  const { signOut } = useAuth();
+  const { metaPrioritySummary } = useCRM();
+  const urgentMetaCount = metaPrioritySummary.overdueCount + metaPrioritySummary.escalatedCount;
+  const metaBadgeLabel =
+    urgentMetaCount > 0
+      ? `${urgentMetaCount} urgent`
+      : metaPrioritySummary.totalCount > 0
+        ? `${metaPrioritySummary.totalCount} live`
+        : null;
+  const metaBadgeTone =
+    metaPrioritySummary.escalatedCount > 0
+      ? "bg-red-500/10 border-red-500/20 text-red-500"
+      : metaPrioritySummary.overdueCount > 0
+        ? "bg-amber-500/10 border-amber-500/20 text-amber-500"
+        : "bg-emerald-500/10 border-emerald-500/20 text-emerald-500";
 
   const menuItems = [
     { name: "Dashboard", href: "/", icon: LayoutDashboard },
-    { name: "Visual Pipeline", href: "/deals", icon: Briefcase },
+    { name: "Visual Pipeline", href: "/deals", icon: Briefcase, badge: metaBadgeLabel },
     { name: "How to Succeed", href: "/onboarding", icon: Presentation },
     { name: "My Calls", href: "/calls", icon: PhoneCall },
     { name: "Performance", href: "/performance", icon: BarChart3 },
@@ -53,9 +68,16 @@ export default function Sidebar({ isOpen, onClose }: SidebarProps) {
                   <item.icon size={18} strokeWidth={isActive ? 2.5 : 2} />
                   <span className="text-[10px] uppercase tracking-widest font-black leading-none">{item.name}</span>
                 </div>
-                {isActive && (
-                  <div className="w-1 h-1 rounded-full bg-white dark:bg-black" />
-                )}
+                <div className="flex items-center gap-2">
+                  {item.badge && (
+                    <span className={`rounded-full border px-2 py-1 text-[7px] font-black uppercase tracking-widest ${metaBadgeTone}`}>
+                      {item.badge}
+                    </span>
+                  )}
+                  {isActive && (
+                    <div className="w-1 h-1 rounded-full bg-white dark:bg-black" />
+                  )}
+                </div>
               </motion.div>
             </Link>
           );
