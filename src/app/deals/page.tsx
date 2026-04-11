@@ -664,6 +664,12 @@ export default function DealsPage() {
           <p className="text-[10px] font-black uppercase tracking-[0.24em] text-white/45">Lead Notes</p>
           <span className="text-[10px] font-bold uppercase tracking-[0.18em] text-white/35">Autosaves while you work</span>
         </div>
+        {expandedLead?.ImportedIntakeSummary && (
+          <div className="mt-4 rounded-[1rem] border border-white/10 bg-black/25 p-4 max-h-48 overflow-y-auto custom-scrollbar">
+            <span className="text-[8px] font-black uppercase tracking-widest text-white/30 block mb-2">Intake Summary</span>
+            <pre className="text-[10px] font-mono text-white/50 whitespace-pre-wrap leading-relaxed">{expandedLead.ImportedIntakeSummary}</pre>
+          </div>
+        )}
         <textarea
           value={panelNote}
           onChange={(event) => setPanelNote(event.target.value)}

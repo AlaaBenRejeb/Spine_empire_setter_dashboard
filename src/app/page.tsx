@@ -278,6 +278,12 @@ export default function SetterDashboardContent() {
                         </div>
                      </div>
                      
+                     {activeLead?.ImportedIntakeSummary && (
+                       <div className="bg-white/5 border border-white/10 rounded-lg p-3 shrink-0 max-h-40 overflow-y-auto custom-scrollbar">
+                         <span className="text-[7px] font-black uppercase tracking-widest text-white/30 block mb-2">Intake Summary</span>
+                         <pre className="text-[10px] font-mono text-white/50 whitespace-pre-wrap leading-relaxed">{activeLead.ImportedIntakeSummary}</pre>
+                       </div>
+                     )}
                      <textarea 
                        value={noteText}
                        onChange={(e) => setNoteText(e.target.value)}
