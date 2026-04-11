@@ -479,9 +479,10 @@ export default function DealsPage() {
   const panelDisposition = (panelLeadNotes?.called_disposition || null) as CalledDisposition | null;
 
   const renderLeadPanelContent = expandedLead ? (
-    <div className="relative flex h-full flex-col gap-5 overflow-y-auto rounded-[2rem] border border-white/10 bg-[#090909]/95 p-5 shadow-[0_30px_80px_rgba(0,0,0,0.45)] backdrop-blur-xl custom-scrollbar">
-      <div className="pointer-events-none absolute inset-x-8 top-0 h-px bg-gradient-to-r from-transparent via-white/35 to-transparent" />
-      <div className="rounded-[1.5rem] border border-white/10 bg-[radial-gradient(circle_at_top_left,rgba(255,255,255,0.08),transparent_35%),rgba(255,255,255,0.03)] p-5">
+    <div className="relative flex h-full flex-col overflow-y-auto rounded-[2rem] border border-white/10 bg-[#090909]/95 shadow-[0_30px_80px_rgba(0,0,0,0.45)] backdrop-blur-xl custom-scrollbar">
+      <div className="flex flex-col gap-5 p-5 pb-8 min-h-max">
+        <div className="pointer-events-none font-sans absolute inset-x-8 top-0 h-px bg-gradient-to-r from-transparent via-white/35 to-transparent" />
+        <div className="rounded-[1.5rem] border border-white/10 bg-[radial-gradient(circle_at_top_left,rgba(255,255,255,0.08),transparent_35%),rgba(255,255,255,0.03)] p-5 shrink-0">
         <div className="flex items-start justify-between gap-4">
           <div className="min-w-0">
             <div className="flex flex-wrap items-center gap-2">
@@ -708,6 +709,7 @@ export default function DealsPage() {
               No calls or messages logged for this lead yet.
             </div>
           )}
+        </div>
         </div>
       </div>
     </div>

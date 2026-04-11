@@ -127,7 +127,7 @@ export default function SetterDashboardContent() {
   if (loading) return null;
 
   return (
-    <main className="flex-1 bg-[#050505] min-h-screen lg:h-screen p-4 md:p-6 lg:p-4 overflow-y-auto lg:overflow-hidden flex flex-col gap-4">
+    <main className="flex-1 bg-[#050505] min-h-screen p-4 md:p-6 lg:p-4 overflow-y-auto flex flex-col gap-4 custom-scrollbar">
       {/* Header Section - Ultra Compact */}
       <div className="hidden lg:flex justify-between items-center bg-white/5 border border-white/10 p-4 rounded-xl backdrop-blur-md shrink-0">
         <div className="flex items-center gap-3">
@@ -223,10 +223,9 @@ export default function SetterDashboardContent() {
         ))}
       </div>
 
-      {/* CRM Workspace - Compact Layout */}
-      <div className="flex-1 grid grid-cols-12 gap-4 min-h-0 overflow-hidden">
-        {/* Main List Area */}
-        <div className={`${activeLead ? 'col-span-12 lg:col-span-4' : 'col-span-12 lg:col-span-8'} flex flex-col min-h-0 transition-all duration-500`}>
+      {/* CRM Workspace */}
+      <div className="grid grid-cols-12 gap-4 flex-1 min-h-[600px]">
+        <div className={`${activeLead ? 'col-span-12 lg:col-span-4' : 'col-span-12 lg:col-span-8'} flex flex-col transition-all duration-500`}>
            <div className="bg-white/5 border border-white/10 rounded-xl overflow-hidden flex flex-col h-full backdrop-blur-sm relative">
               <div className="p-3 border-b border-white/10 flex items-center justify-between bg-white/[0.02]">
                 <div className="flex items-center gap-2">
@@ -240,8 +239,7 @@ export default function SetterDashboardContent() {
            </div>
         </div>
 
-        {/* Active Panel Area */}
-        <div className={`${activeLead ? 'col-span-12 lg:col-span-8' : 'hidden lg:flex lg:col-span-4'} flex flex-col min-h-0 transition-all duration-500`}>
+        <div className={`${activeLead ? 'col-span-12 lg:col-span-8' : 'hidden lg:flex lg:col-span-4'} flex flex-col transition-all duration-500`}>
            <AnimatePresence mode="wait">
              {activeLead ? (
                <motion.div 
@@ -249,7 +247,7 @@ export default function SetterDashboardContent() {
                  initial={{ opacity: 0, x: 20 }}
                  animate={{ opacity: 1, x: 0 }}
                  exit={{ opacity: 0, x: 20 }}
-                 className="flex-1 min-h-0 relative flex flex-col gap-4 overflow-y-auto overscroll-y-contain rounded-xl border border-white/10 bg-white/5 p-6 pr-4 pb-36 lg:pb-44 custom-scrollbar"
+                 className="flex-1 relative flex flex-col gap-4 rounded-xl border border-white/10 bg-white/5 p-6 custom-scrollbar"
                >
                    <button onClick={() => setActiveLead(null)} className="absolute top-4 right-4 text-white/20 hover:text-white transition-colors">
                      <XCircle size={20} strokeWidth={2} />
@@ -262,10 +260,6 @@ export default function SetterDashboardContent() {
                      <h2 className="text-2xl md:text-3xl font-black tracking-tighter leading-tight uppercase italic text-white truncate pr-10">{activeLead["Practice Name"]}</h2>
                      <p className="text-[9px] text-white/20 uppercase tracking-[0.3em] font-bold">{activeLead.City} • {activeLead.Phone}</p>
                      <p className="text-[9px] text-white/30 uppercase tracking-[0.25em] font-bold">SOURCE • {activeLead.Source || "manual"}</p>
-                     {activeLead["Google Maps URL"] && (
-                       <a
-                         href={activeLead["Google Maps URL"]}
-                         target="_blank"
                          rel="noopener noreferrer"
                          className="mt-2 inline-flex w-fit items-center gap-1.5 rounded-full border border-white/10 bg-white/[0.04] px-3 py-1.5 text-[9px] font-black uppercase tracking-[0.22em] text-white/70 transition-colors hover:border-white/20 hover:text-white"
                        >
