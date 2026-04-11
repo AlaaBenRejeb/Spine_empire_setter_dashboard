@@ -249,7 +249,7 @@ export default function SetterDashboardContent() {
                  initial={{ opacity: 0, x: 20 }}
                  animate={{ opacity: 1, x: 0 }}
                  exit={{ opacity: 0, x: 20 }}
-                 className="flex-1 flex flex-col gap-4 p-6 bg-white/5 border border-white/10 rounded-xl relative overflow-hidden"
+                 className="flex-1 min-h-0 relative flex flex-col gap-4 overflow-y-auto overscroll-y-contain rounded-xl border border-white/10 bg-white/5 p-6 pr-4 pb-36 lg:pb-44 custom-scrollbar"
                >
                    <button onClick={() => setActiveLead(null)} className="absolute top-4 right-4 text-white/20 hover:text-white transition-colors">
                      <XCircle size={20} strokeWidth={2} />
@@ -311,7 +311,7 @@ export default function SetterDashboardContent() {
                      })}
                    </div>
 
-                   <div className="flex flex-col gap-3 flex-1 min-h-0">
+                   <div className="flex flex-col gap-3 min-h-0">
                      <div className="flex flex-col gap-2 p-4 bg-white rounded-lg text-black shrink-0">
                         <span className="text-[8px] font-black uppercase tracking-widest opacity-40">System Scheduler</span>
                         <div className="grid grid-cols-2 gap-2">
@@ -331,7 +331,7 @@ export default function SetterDashboardContent() {
                        onChange={(e) => setNoteText(e.target.value)}
                        onBlur={() => handleStatusUpdate(leadNotes[activeLead.id]?.status || activeLead.Status || "new")}
                        placeholder="Log intelligence..."
-                       className="flex-1 bg-white/5 border border-white/10 p-4 rounded-lg text-xs font-medium text-white placeholder:text-white/10 focus:border-white/20 outline-none transition-all resize-none custom-scrollbar min-h-0"
+                       className="min-h-[240px] bg-white/5 border border-white/10 p-4 rounded-lg text-xs font-medium text-white placeholder:text-white/10 focus:border-white/20 outline-none transition-all resize-none custom-scrollbar"
                      />
                    </div>
 
