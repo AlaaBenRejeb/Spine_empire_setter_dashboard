@@ -249,7 +249,7 @@ export default function SetterDashboardContent() {
 
       {/* CRM Workspace */}
       <div className="grid grid-cols-12 gap-4 flex-1 min-h-[600px]">
-        <div className={`${activeLead ? 'col-span-12 lg:col-span-4' : 'col-span-12 lg:col-span-8'} flex flex-col transition-all duration-500`}>
+        <div className={`${activeLead ? 'col-span-12 lg:col-span-7' : 'col-span-12 lg:col-span-8'} flex flex-col transition-all duration-500`}>
            <div className="bg-white/5 border border-white/10 rounded-xl overflow-hidden flex flex-col h-full backdrop-blur-sm relative">
               <div className="p-3 border-b border-white/10 flex items-center justify-between bg-white/[0.02]">
                 <div className="flex items-center gap-2">
@@ -263,7 +263,7 @@ export default function SetterDashboardContent() {
            </div>
         </div>
 
-        <div className={`${activeLead ? 'col-span-12 lg:col-span-8' : 'hidden lg:flex lg:col-span-4'} flex flex-col transition-all duration-500`}>
+        <div className={`${activeLead ? 'col-span-12 lg:col-span-5' : 'hidden lg:flex lg:col-span-4'} flex flex-col transition-all duration-500`}>
            <AnimatePresence mode="wait">
              {activeLead ? (
                <motion.div 
@@ -271,7 +271,7 @@ export default function SetterDashboardContent() {
                  initial={{ opacity: 0, x: 20 }}
                  animate={{ opacity: 1, x: 0 }}
                  exit={{ opacity: 0, x: 20 }}
-                 className="flex-1 relative flex flex-col gap-4 rounded-xl border border-white/10 bg-white/5 p-6 custom-scrollbar"
+                 className="flex-1 relative flex flex-col gap-4 rounded-xl border border-white/10 bg-white/5 p-6 overflow-y-auto custom-scrollbar max-h-[85vh] lg:max-h-[calc(100vh-260px)]"
                >
                    <button onClick={() => setActiveLead(null)} className="absolute top-4 right-4 text-white/20 hover:text-white transition-colors">
                      <XCircle size={20} strokeWidth={2} />
