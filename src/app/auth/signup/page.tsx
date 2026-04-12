@@ -7,6 +7,8 @@ import { consumeInvitationRpc, verifyInvitationRpc } from "@/lib/supabase/invita
 import { motion } from "framer-motion"
 import { Mail, Lock, User, ChevronRight, Loader2, CheckCircle2 } from "lucide-react"
 
+const EXISTING_ACCOUNT_ERROR = /already registered/i
+
 export default function SignupPage() {
   const router = useRouter()
   const searchParams = useSearchParams()
@@ -71,6 +73,8 @@ export default function SignupPage() {
     setError(null)
 
     try {
+      let invitedUser: { id: string } | null = null
+
       // 1. Auth Signup
       const { data: authData, error: signupError } = await supabase.auth.signUp({
         email: inviteInfo.email,
@@ -83,26 +87,45 @@ export default function SignupPage() {
         }
       })
 
-      if (signupError) throw signupError
-
-      if (authData.user) {
-        // 2. Atomically consume invitation + assign secure role from DB invite record
-        const { error: consumeError } = await consumeInvitationRpc(supabase, {
-          token,
-          userId: authData.user.id,
-          firstName,
-          lastName
-        })
-
-        if (consumeError) {
-          throw consumeError
+      if (signupError) {
+        if (!EXISTING_ACCOUNT_ERROR.test(signupError.message || "")) {
+          throw signupError
         }
 
-        setSuccess(true)
-        setTimeout(() => {
-          router.push('/')
-        }, 2000)
+        const { data: signInData, error: signInError } = await supabase.auth.signInWithPassword({
+          email: inviteInfo.email,
+          password,
+        })
+
+        if (signInError || !signInData.user) {
+          throw signInError || new Error("ACCOUNT ALREADY EXISTS. RETRY WITH YOUR ORIGINAL PASSWORD OR RESET IT.")
+        }
+
+        invitedUser = signInData.user
+      } else {
+        invitedUser = authData.user
       }
+
+      if (!invitedUser) {
+        throw new Error("AUTHENTICATION DID NOT RETURN A USER RECORD.")
+      }
+
+      // 2. Atomically consume invitation + assign secure role from DB invite record
+      const { error: consumeError } = await consumeInvitationRpc(supabase, {
+        token,
+        userId: invitedUser.id,
+        firstName,
+        lastName
+      })
+
+      if (consumeError) {
+        throw consumeError
+      }
+
+      setSuccess(true)
+      setTimeout(() => {
+        router.push('/')
+      }, 2000)
     } catch (err: any) {
       setError(err.message || "Nexus Synchronization Failure.")
     } finally {
