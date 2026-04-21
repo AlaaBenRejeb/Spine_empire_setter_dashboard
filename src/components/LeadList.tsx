@@ -4,7 +4,12 @@ import { useState, useMemo } from "react";
 import { Search, Phone, Star, MapPin, ChevronRight, MessageSquare, Briefcase, User, ExternalLink } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
 import { useCRM } from "@/context/CRMContext";
-import { getMetaPrioritySlaState, META_PRIORITY_STATUS, resolveMetaPriorityCreatedAt } from "@/lib/metaPriority";
+import {
+  getMetaPrioritySlaState,
+  META_PRIORITY_LANE_LABEL,
+  META_PRIORITY_STATUS,
+  resolveMetaPriorityCreatedAt,
+} from "@/lib/metaPriority";
 
 const formatMetaPriorityAge = (value?: string | null) => {
   if (!value) return "Just in";
@@ -85,7 +90,7 @@ export default function LeadList() {
                  : 'bg-background border-glass-border text-muted-foreground hover:border-black'
                }`}
              >
-               {status === META_PRIORITY_STATUS ? 'meta priority' : status}
+               {status === META_PRIORITY_STATUS ? 'priority intake' : status}
              </button>
           ))}
           <div className="px-5 py-3 bg-black text-white dark:bg-white dark:text-black font-bold text-[10px] uppercase tracking-widest rounded-xl border border-black dark:border-white whitespace-nowrap shadow-[0_10px_25px_rgba(0,0,0,0.08)]">
@@ -168,8 +173,16 @@ export default function LeadList() {
                                 {status === META_PRIORITY_STATUS && (
                                   <>
                                     <div className="px-2 py-0.5 bg-orange-500/10 border border-orange-500/20 rounded text-[7px] font-black text-orange-500 uppercase tracking-widest whitespace-nowrap">
-                                      Meta Priority
+                                      {META_PRIORITY_LANE_LABEL}
                                     </div>
+                                    <div className="px-2 py-0.5 rounded border border-sky-500/20 bg-sky-500/10 text-[7px] font-black uppercase tracking-widest text-sky-400 whitespace-nowrap">
+                                      {lead.PriorityOriginLabel || "Priority Lead"}
+                                    </div>
+                                    {lead.PriorityReadinessLabel && (
+                                      <div className="px-2 py-0.5 rounded border border-white/10 bg-white/5 text-[7px] font-black uppercase tracking-widest text-white/65 whitespace-nowrap">
+                                        {lead.PriorityReadinessLabel}
+                                      </div>
+                                    )}
                                     <div
                                       className={`px-2 py-0.5 rounded text-[7px] font-black uppercase tracking-widest whitespace-nowrap ${
                                         metaPrioritySla === "escalated"
@@ -215,7 +228,9 @@ export default function LeadList() {
                                   </a>
                                 )}
                                 <span className="flex items-center gap-1.5 opacity-80"><User size={12} /> {lead["First Name"] || "Owner"}</span>
-                                <span className="flex items-center gap-1.5 opacity-60">{lead.Source || "manual"}</span>
+                                <span className="flex items-center gap-1.5 opacity-60">
+                                  {status === META_PRIORITY_STATUS ? lead.PriorityOriginLabel || lead.Source || "manual" : lead.Source || "manual"}
+                                </span>
                              </div>
                           </div>
                        </div>

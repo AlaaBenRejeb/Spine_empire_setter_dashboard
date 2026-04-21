@@ -33,6 +33,7 @@ import { useAuth } from "@/context/AuthContext";
 import Image from "next/image";
 import { calculateSetterMetrics } from "@/lib/performanceUtils";
 import type { Timeframe } from "@/lib/timeframe";
+import { META_PRIORITY_LANE_LABEL } from "@/lib/metaPriority";
 
 function formatTime12Hour(time24: string) {
   if (!time24) return "09:00 AM";
@@ -192,7 +193,7 @@ export default function SetterDashboardContent() {
           }`}
         >
           <div className="flex flex-col gap-2">
-            <span className="text-[8px] font-black uppercase tracking-[0.32em] text-white/45">Meta Priority Watch</span>
+            <span className="text-[8px] font-black uppercase tracking-[0.32em] text-white/45">{META_PRIORITY_LANE_LABEL} Watch</span>
             <p className="text-sm font-black uppercase tracking-[0.16em] text-white">
               {metaPrioritySummary.totalCount} live in shared queue • {metaPrioritySummary.freshCount} fresh • {metaPrioritySummary.overdueCount} overdue • {metaPrioritySummary.escalatedCount} escalated
             </p>

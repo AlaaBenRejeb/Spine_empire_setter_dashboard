@@ -7,6 +7,7 @@ import MobileHeader from "@/components/MobileHeader";
 import ScriptBuddy from "@/components/ScriptBuddy";
 import { ThemeProvider } from "@/context/ThemeContext";
 import { CRMProvider, useCRM } from "@/context/CRMContext";
+import { META_PRIORITY_LANE_LABEL } from "@/lib/metaPriority";
 import { Toaster } from "sonner";
 
 const inter = Inter({
@@ -74,20 +75,25 @@ function AppLayout({ children }: { children: React.ReactNode }) {
             <div className="flex items-start justify-between gap-3">
               <div className="min-w-0">
                 <span className="inline-flex rounded-full border border-emerald-500/20 bg-emerald-500/10 px-2.5 py-1 text-[8px] font-black uppercase tracking-[0.22em] text-emerald-300">
-                  Fresh Meta Lead
+                  Fresh {liveMetaPriorityAlert.originLabel}
                 </span>
                 <h3 className="mt-3 text-lg font-heading font-black uppercase italic leading-tight text-white">
                   {liveMetaPriorityAlert.practiceName}
                 </h3>
                 <p className="mt-2 text-[10px] font-black uppercase tracking-[0.22em] text-white/40">
-                  Shared queue • {liveMetaPriorityAlert.ageLabel}
+                  {META_PRIORITY_LANE_LABEL} • {liveMetaPriorityAlert.ageLabel}
                 </p>
+                {liveMetaPriorityAlert.readinessLabel ? (
+                  <p className="mt-2 text-[10px] font-black uppercase tracking-[0.22em] text-white/55">
+                    {liveMetaPriorityAlert.readinessLabel}
+                  </p>
+                ) : null}
               </div>
 
               <button
                 onClick={dismissMetaPriorityLiveAlert}
                 className="rounded-full border border-white/10 p-2 text-white/45 transition-colors hover:border-white/20 hover:text-white"
-                aria-label="Dismiss meta priority alert"
+                aria-label="Dismiss priority intake alert"
               >
                 ×
               </button>

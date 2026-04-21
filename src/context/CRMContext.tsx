@@ -11,7 +11,10 @@ import { normalizeDealValue } from "@/lib/dealValue";
 import { buildGoogleMapsUrl, resolveGoogleMapsUrl } from "@/lib/googleMaps";
 import { toast } from "sonner";
 import {
+  getPriorityLeadOriginLabel,
+  getPriorityLeadReadinessLabel,
   META_PRIORITY_STATUS,
+  isPriorityLeadSource,
   formatMetaPriorityAge,
   getMetaPrioritySlaState,
   isMetaPriorityLead,
@@ -86,6 +89,8 @@ export interface MetaPriorityLiveAlert {
   practiceName: string;
   createdAt: string | null;
   ageLabel: string;
+  originLabel: string;
+  readinessLabel?: string | null;
 }
 
 interface CRMContextType {
@@ -256,37 +261,45 @@ export function CRMProvider({ children }: { children: React.ReactNode }) {
     setActiveLead((current: any) => (current?.id === leadId ? null : current));
   }, [notesStorageKey]);
 
-  const transformLead = (lead: any) => ({
-    id: lead.id,
-    "Practice Name": lead.business_name,
-    "First Name": lead.contact_name?.split(' ')[0] || "Owner",
-    "Last Name": lead.contact_name?.split(' ').slice(1).join(' ') || "",
-    Phone: lead.phone || "",
-    City: lead.metadata?.city || "",
-    State: lead.metadata?.state || "",
-    "Google Reviews": lead.metadata?.google_reviews || "0",
-    Email: lead.metadata?.email || lead.id,
-    "Revenue Range": lead.revenue_range || "Unknown",
-    "Main Challenge": lead.main_challenge || "",
-    DealValue: normalizeDealValue(lead.metadata?.deal_value),
-    "Google Maps URL": resolveGoogleMapsUrl({
-      existingUrl: lead.google_maps_url,
-      practiceName: lead.business_name,
-      city: lead.metadata?.city,
-      state: lead.metadata?.state,
-    }),
-    Source: lead.metadata?.source || "manual",
-    Status: lead.status || "new",
-    SetterId: lead.setter_id || null,
-    CloserId: lead.closer_id || null,
-    MetaPriorityCreatedAt: resolveMetaPriorityCreatedAt(lead.metadata, lead.created_at),
-    ClaimedAt: lead.metadata?.claimed_at || null,
-    ClaimedBy: lead.metadata?.claimed_by || null,
-    FirstOutreachAt: lead.metadata?.first_outreach_at || null,
-    ImportedIntakeSummary: lead.metadata?.imported_intake_summary || "",
-    CreatedAt: lead.created_at || null,
-    UpdatedAt: lead.updated_at || null,
-  });
+  const transformLead = (lead: any) => {
+    const source = lead.source || lead.metadata?.source || "manual";
+    const priorityOriginLabel = getPriorityLeadOriginLabel(source);
+    const priorityReadinessLabel = getPriorityLeadReadinessLabel(lead.metadata?.readiness);
+
+    return {
+      id: lead.id,
+      "Practice Name": lead.business_name,
+      "First Name": lead.contact_name?.split(' ')[0] || "Owner",
+      "Last Name": lead.contact_name?.split(' ').slice(1).join(' ') || "",
+      Phone: lead.phone || "",
+      City: lead.metadata?.city || "",
+      State: lead.metadata?.state || "",
+      "Google Reviews": lead.metadata?.google_reviews || "0",
+      Email: lead.email || lead.metadata?.email || lead.id,
+      "Revenue Range": lead.revenue_range || "Unknown",
+      "Main Challenge": lead.main_challenge || "",
+      DealValue: normalizeDealValue(lead.metadata?.deal_value),
+      "Google Maps URL": resolveGoogleMapsUrl({
+        existingUrl: lead.google_maps_url,
+        practiceName: lead.business_name,
+        city: lead.metadata?.city,
+        state: lead.metadata?.state,
+      }),
+      Source: source,
+      PriorityOriginLabel: priorityOriginLabel,
+      PriorityReadinessLabel: priorityReadinessLabel,
+      Status: lead.status || "new",
+      SetterId: lead.setter_id || null,
+      CloserId: lead.closer_id || null,
+      MetaPriorityCreatedAt: resolveMetaPriorityCreatedAt(lead.metadata, lead.created_at),
+      ClaimedAt: lead.metadata?.claimed_at || null,
+      ClaimedBy: lead.metadata?.claimed_by || null,
+      FirstOutreachAt: lead.metadata?.first_outreach_at || null,
+      ImportedIntakeSummary: lead.metadata?.imported_intake_summary || "",
+      CreatedAt: lead.created_at || null,
+      UpdatedAt: lead.updated_at || null,
+    };
+  };
 
   // 1. Initial Data Load — driven by auth state, no competing getSession() call
   useEffect(() => {
@@ -404,7 +417,7 @@ export function CRMProvider({ children }: { children: React.ReactNode }) {
           payload.eventType === "INSERT" &&
           isMetaPriorityLead({
             status: updated?.status,
-            source: updated?.metadata?.source,
+            source: updated?.source || updated?.metadata?.source,
           })
         ) {
           const createdAt = resolveMetaPriorityCreatedAt(updated?.metadata, updated?.created_at);
@@ -416,6 +429,8 @@ export function CRMProvider({ children }: { children: React.ReactNode }) {
               `Lead ${String(updated?.id || "").slice(0, 8)}`,
             createdAt,
             ageLabel: formatMetaPriorityAge(createdAt),
+            originLabel: getPriorityLeadOriginLabel(updated?.source || updated?.metadata?.source),
+            readinessLabel: getPriorityLeadReadinessLabel(updated?.metadata?.readiness),
           });
         }
 
@@ -666,7 +681,7 @@ export function CRMProvider({ children }: { children: React.ReactNode }) {
       .map((lead) => {
         const status = leadNotes[lead.id]?.status || lead.Status || "new";
         if (status !== META_PRIORITY_STATUS) return null;
-        if (lead.Source !== "meta_lead_ad") return null;
+        if (!isPriorityLeadSource(lead.Source)) return null;
 
         const createdAt = resolveMetaPriorityCreatedAt(
           { meta_priority_created_at: lead.MetaPriorityCreatedAt },

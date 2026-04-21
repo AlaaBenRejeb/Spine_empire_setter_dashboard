@@ -22,13 +22,18 @@ import FollowUpModal from "@/components/FollowUpModal";
 import { useCRM } from "@/context/CRMContext";
 import { useKanbanScroll } from "@/hooks/useKanbanScroll";
 import { formatDealValueCurrency } from "@/lib/dealValue";
-import { formatMetaPriorityAge, getMetaPrioritySlaState, META_PRIORITY_STATUS } from "@/lib/metaPriority";
+import {
+  formatMetaPriorityAge,
+  getMetaPrioritySlaState,
+  META_PRIORITY_LANE_LABEL,
+  META_PRIORITY_STATUS,
+} from "@/lib/metaPriority";
 
 const COLUMNS = [
   {
     id: META_PRIORITY_STATUS,
-    title: "Meta Priority",
-    subtitle: "Fresh Meta leads waiting for first setter touch",
+    title: META_PRIORITY_LANE_LABEL,
+    subtitle: "Fast-response Meta leads and website audit applications waiting for first setter touch",
     accent: "bg-orange-400",
     border: "border-orange-400/20",
   },
@@ -76,7 +81,7 @@ const DISPOSITION_STYLES: Record<(typeof CALLED_DISPOSITIONS)[number], string> =
   followup: "border-amber-400/40 bg-amber-400/15 text-amber-100",
 };
 const STAGE_LABELS: Record<(typeof COLUMNS)[number]["id"], string> = {
-  [META_PRIORITY_STATUS]: "Meta Priority",
+  [META_PRIORITY_STATUS]: META_PRIORITY_LANE_LABEL,
   new: "New",
   called: "Called",
   booked: "Booked",
@@ -946,6 +951,14 @@ export default function DealsPage() {
                                   )}
                                   {status === META_PRIORITY_STATUS && (
                                     <>
+                                      <span className="rounded-full border border-sky-400/20 bg-sky-400/10 px-3 py-1 text-[10px] font-black uppercase tracking-[0.2em] text-sky-200">
+                                        {lead.PriorityOriginLabel || "Priority Lead"}
+                                      </span>
+                                      {lead.PriorityReadinessLabel && (
+                                        <span className="rounded-full border border-white/10 bg-white/[0.04] px-3 py-1 text-[10px] font-black uppercase tracking-[0.2em] text-white/65">
+                                          {lead.PriorityReadinessLabel}
+                                        </span>
+                                      )}
                                       <span className={`rounded-full border px-3 py-1 text-[10px] font-black uppercase tracking-[0.2em] ${PRIORITY_SLA_STYLES[prioritySlaState]}`}>
                                         {getPrioritySlaLabel(priorityTimestamp)}
                                       </span>
@@ -984,7 +997,7 @@ export default function DealsPage() {
                                 </a>
                               )}
                               <span className="rounded-full border border-white/10 bg-white/[0.04] px-3 py-1 text-white/40">
-                                {lead.Source || "manual"}
+                                {status === META_PRIORITY_STATUS ? lead.PriorityOriginLabel || lead.Source || "manual" : lead.Source || "manual"}
                               </span>
                             </div>
 
@@ -992,13 +1005,13 @@ export default function DealsPage() {
                               <div className="flex items-center justify-between gap-3">
                                 <div className="min-w-0">
                                   <p className="flex items-center gap-2 text-[10px] font-black uppercase tracking-[0.2em] text-white/35">
-                                    <User size={11} /> {status === META_PRIORITY_STATUS ? "Priority Intake" : "Contact"}
+                                    <User size={11} /> {status === META_PRIORITY_STATUS ? META_PRIORITY_LANE_LABEL : "Contact"}
                                   </p>
                                   {status === META_PRIORITY_STATUS ? (
                                     <>
-                                      <p className="mt-2 text-sm font-bold text-white">{formatMetaPriorityAge(priorityTimestamp)}</p>
+                                      <p className="mt-2 text-sm font-bold text-white">{lead.PriorityOriginLabel || META_PRIORITY_LANE_LABEL}</p>
                                       <p className="mt-1 text-[10px] font-black uppercase tracking-[0.18em] text-white/38">
-                                        {getPrioritySlaLabel(priorityTimestamp)} queue visibility
+                                        {(lead.PriorityReadinessLabel || getPrioritySlaLabel(priorityTimestamp))} queue visibility
                                       </p>
                                     </>
                                   ) : (
