@@ -16,7 +16,7 @@ export default function ScriptBuddy({ activeLead }: { activeLead?: ActiveLead })
 
     if (isGatekeeper) {
       return [
-        { label: "OPENING", content: `Good morning — who handles patient growth decisions there at ${practice}?` },
+        { label: "OPENING", content: `Good morning - who handles patient growth decisions there at ${practice}?` },
         { label: "THE HOOK", content: `It’s regarding patient acquisition for the clinic. We help practices like yours improve consistency in new patient flow. Is the owner available to speak briefly?` },
         { label: "THE ROUTE", content: `Perfect. If they're busy, who would be the best person to schedule a quick 10-minute talk with regarding your patient acquisition flow?` },
         { label: "RESISTANCE", content: `I understand they're busy. That’s why I’m keeping it short. Should I speak with you to find a time on their calendar, or is there a direct extension?` }
@@ -27,12 +27,12 @@ export default function ScriptBuddy({ activeLead }: { activeLead?: ActiveLead })
       {
         label: "OPENER",
         content:
-          "Hey quick one — this isn't a sales call.\nI noticed something about your clinic that's costing you patients.\nNot sure if you want me to tell you or not?\n\nPause.",
+          "Hey quick one - this isn't a sales call.\nI noticed something about your clinic that's costing you patients.\nNot sure if you want me to tell you or not?\n\nPause.",
       },
       {
         label: "THE PROBLEM",
         content:
-          "You don't have a consistent patient acquisition system.\nSo your numbers depend on referrals, random ads, or slow days — which means revenue is unstable.\n\nPause again.\n\nLet them agree or react.",
+          "You don't have a consistent patient acquisition system.\nSo your numbers depend on referrals, random ads, or slow days - which means revenue is unstable.\n\nPause again.\n\nLet them agree or react.",
       },
       {
         label: "POSITION",
@@ -46,12 +46,12 @@ export default function ScriptBuddy({ activeLead }: { activeLead?: ActiveLead })
       },
       {
         label: "IF THEY SAY YES",
-        content: "Perfect — I've got [time] or [time]. Which works?",
+        content: "Perfect - I've got [time] or [time]. Which works?",
       },
       {
         label: "IF THEY HESITATE",
         content:
-          "\"I'm busy\"\n\nMakes sense — that's exactly why I'm suggesting 10 minutes.\nIf it's not useful, you hang up.",
+          "\"I'm busy\"\n\nMakes sense - that's exactly why I'm suggesting 10 minutes.\nIf it's not useful, you hang up.",
       },
     ];
   }, [activeLead, isGatekeeper]);

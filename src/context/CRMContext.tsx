@@ -301,7 +301,7 @@ export function CRMProvider({ children }: { children: React.ReactNode }) {
     };
   };
 
-  // 1. Initial Data Load — driven by auth state, no competing getSession() call
+  // 1. Initial Data Load - driven by auth state, no competing getSession() call
   useEffect(() => {
     if (notesStorageKey) {
       const saved = localStorage.getItem(notesStorageKey);
@@ -951,7 +951,7 @@ export function CRMProvider({ children }: { children: React.ReactNode }) {
           return next;
         });
         console.error(`❌ DB Sync Error [${updates.status}]:`, error?.message || "No rows updated");
-        toast.error("Sync failed — changes reverted");
+        toast.error("Sync failed - changes reverted");
         return;
       }
 
@@ -1028,7 +1028,7 @@ export function CRMProvider({ children }: { children: React.ReactNode }) {
         return next;
       });
       console.error("❌ Unexpected error during sync:", err);
-      toast.error("Sync failed — check connection");
+      toast.error("Sync failed - check connection");
     }
   };
 

@@ -27,7 +27,7 @@ const SCENARIOS = [
   { id: "missed-call", label: "No Answer", icon: <Phone size={14}/>, subject: "Quick note about patient flow" },
   { id: "busy", label: "Spoke Briefly", icon: <Clock size={14}/>, subject: "Following up from my call" },
   { id: "interested-no-booking", label: "Interested", icon: <UserCheck size={14}/>, subject: "Next step for [Clinic Name]" },
-  { id: "confirmation", label: "Confirmation", icon: <Check size={14}/>, subject: "Confirmed — [day/time]" },
+  { id: "confirmation", label: "Confirmation", icon: <Check size={14}/>, subject: "Confirmed - [day/time]" },
   { id: "reminder", label: "Reminders", icon: <Bell size={14}/>, subject: "Reminder for today" },
   { id: "no-show", label: "No-Show", icon: <Ghost size={14}/>, subject: "Missed you" },
   { id: "send-info", label: "Sent Info", icon: <Inbox size={14}/>, subject: "Info you asked for" },
@@ -48,19 +48,19 @@ const SCRIPTS: Record<string, { email: string, sms: string }> = {
   },
   "busy": {
     email: "Hi Dr. [Name],\n\nThanks for taking my call earlier.\n\nYou mentioned timing was tight, so I’ll keep this brief. The reason I reached out is that we help clinics improve consistency in booked patients without relying entirely on referrals.\n\nIf it makes sense, let’s keep it to 10 minutes and I’ll walk you through how this could apply to [Clinic Name].\n\nWould [time 1] or [time 2] work better?\n\n– [Setter Name]",
-    sms: "Hey Dr. [Name], [Setter Name] here — as mentioned, this is about making patient flow more predictable for [Clinic Name]. You said timing was tight, so I’ll keep it simple: does [day/time 1] or [day/time 2] work better for a quick 10-minute call?"
+    sms: "Hey Dr. [Name], [Setter Name] here - as mentioned, this is about making patient flow more predictable for [Clinic Name]. You said timing was tight, so I’ll keep it simple: does [day/time 1] or [day/time 2] work better for a quick 10-minute call?"
   },
   "send-info": {
     email: "Hi Dr. [Name],\n\nAs requested, here’s the short version:\n\nWe help clinics make new patient flow more predictable by tightening the front-end patient acquisition system rather than leaving growth to referrals alone.\n\nThe reason I didn’t want to send a wall of text is simple: whether this is relevant depends on how [Clinic Name] is currently getting patients and where the leak is.\n\nIf helpful, I can walk you through it in 10 minutes and keep it specific to your clinic.\n\nWould [time 1] or [time 2] work?\n\n– [Setter Name]",
     sms: "Absolutely. High level: we help clinics improve consistency in new patient flow and reduce reliance on referrals alone. Easier to explain in context of your clinic. Worth a quick 10-minute call so I can tailor it properly?"
   },
   "not-interested": {
-    email: "Hi Dr. [Name],\n\nCompletely fair.\n\nUsually when I hear “not interested,” it means one of two things: either patient flow is already consistent, or it just isn’t the right timing.\n\nOut of curiosity — is [Clinic Name] fully booked consistently, or does it fluctuate month to month?\n\nIf it’s already handled, great. If not, I may be able to help.\n\n– [Setter Name]",
-    sms: "Understood. Usually when someone says that, it means either things are working well already or timing’s off. Out of curiosity — are you fully booked consistently, or does it fluctuate?"
+    email: "Hi Dr. [Name],\n\nCompletely fair.\n\nUsually when I hear “not interested,” it means one of two things: either patient flow is already consistent, or it just isn’t the right timing.\n\nOut of curiosity - is [Clinic Name] fully booked consistently, or does it fluctuate month to month?\n\nIf it’s already handled, great. If not, I may be able to help.\n\n– [Setter Name]",
+    sms: "Understood. Usually when someone says that, it means either things are working well already or timing’s off. Out of curiosity - are you fully booked consistently, or does it fluctuate?"
   },
   "interested-no-booking": {
     email: "Hi Dr. [Name],\n\nGood speaking earlier.\n\nBased on what you shared around [insert situation], I do think there’s enough here to warrant a quick look.\n\nThe next step is simple: a short 10-minute call where I’ll show you how this could work specifically for [Clinic Name].\n\nI have [time 1] or [time 2] available. Which works better?\n\n– [Setter Name]",
-    sms: "Hey Dr. [Name], [Setter Name] here. Enjoyed the quick chat earlier. Based on what you shared about [referrals/ads/inconsistent flow], I do think it’s worth a proper 10-minute look. I’ve got [time 1] or [time 2] open — which is better?"
+    sms: "Hey Dr. [Name], [Setter Name] here. Enjoyed the quick chat earlier. Based on what you shared about [referrals/ads/inconsistent flow], I do think it’s worth a proper 10-minute look. I’ve got [time 1] or [time 2] open - which is better?"
   },
   "confirmation": {
     email: "Hi Dr. [Name],\n\nYou’re confirmed for [day] at [time].\n\nAgenda will be simple:\n1. how you’re currently getting patients\n2. where the leak likely is\n3. what a more predictable flow could look like\n\nI’ll keep it short and relevant.\n\nSee you then,\n[Setter Name]",
@@ -71,7 +71,7 @@ const SCRIPTS: Record<string, { email: string, sms: string }> = {
     sms: "Hey Dr. [Name], quick reminder for our call today at [time]. I’ll keep it to 10 minutes and focused on how to make patient flow more predictable for [Clinic Name]."
   },
   "no-show": {
-    email: "Hi Dr. [Name],\n\nLooks like we missed each other.\n\nNo problem — happy to reschedule and keep it brief. The goal is still the same: show you whether there’s a way to make patient flow more predictable for [Clinic Name].\n\nWould [new time 1] or [new time 2] work better?\n\n– [Setter Name]",
+    email: "Hi Dr. [Name],\n\nLooks like we missed each other.\n\nNo problem - happy to reschedule and keep it brief. The goal is still the same: show you whether there’s a way to make patient flow more predictable for [Clinic Name].\n\nWould [new time 1] or [new time 2] work better?\n\n– [Setter Name]",
     sms: "Hey Dr. [Name], looks like we missed each other. No problem. Still happy to keep this brief and show you what I meant regarding more predictable patient flow. Does [new time 1] or [new time 2] work better?"
   },
   "gatekeeper-no-transfer": {
@@ -92,15 +92,15 @@ const SCRIPTS: Record<string, { email: string, sms: string }> = {
   },
   "call-later": {
     email: "Hi Dr. [Name],\n\nFollowing up as requested.\n\nThis was regarding patient acquisition and whether there’s room to make patient flow more predictable for [Clinic Name].\n\nWould [time 1] or [time 2] work for a quick 10-minute conversation?\n\n– [Setter Name]",
-    sms: "Will do. As promised, this is [Setter Name] following up about patient acquisition for [Clinic Name]. What’s better for a quick call — [time 1] or [time 2]?"
+    sms: "Will do. As promised, this is [Setter Name] following up about patient acquisition for [Clinic Name]. What’s better for a quick call - [time 1] or [time 2]?"
   },
   "curious-skeptical": {
-    email: "Hi Dr. [Name],\n\nTotally fair to be skeptical.\n\nMost clinics get pitched constantly. The reason I reached out is not to throw generic marketing at you — it’s to see whether there’s actually a leak in patient acquisition worth fixing.\n\nThat’s also why I’d rather keep it to 10 minutes and make it specific to [Clinic Name].\n\nWould [time 1] or [time 2] work?\n\n– [Setter Name]",
+    email: "Hi Dr. [Name],\n\nTotally fair to be skeptical.\n\nMost clinics get pitched constantly. The reason I reached out is not to throw generic marketing at you - it’s to see whether there’s actually a leak in patient acquisition worth fixing.\n\nThat’s also why I’d rather keep it to 10 minutes and make it specific to [Clinic Name].\n\nWould [time 1] or [time 2] work?\n\n– [Setter Name]",
     sms: "Fair to be skeptical. Most clinics hear a lot of noise. That’s exactly why I’d rather keep it to 10 minutes and make it specific to your clinic instead of pitching blindly."
   },
   "fumble": {
     email: "Hi Dr. [Name],\n\nAppreciate you taking my call earlier.\n\nI wanted to follow up more clearly. The reason I reached out is to see whether there’s room to improve consistency in new patient flow for [Clinic Name], especially if growth depends too heavily on referrals or fluctuates.\n\nIf it’s worth 10 minutes, I’d be happy to walk you through what I mean.\n\nBest,\n[Setter Name]",
-    sms: "Hey Dr. [Name], [Setter Name] here — appreciate you taking the call earlier. I wanted to follow up more clearly: the reason I reached out is to see whether there’s room to make patient flow more predictable for [Clinic Name]. If it’s worth 10 minutes, I’d be happy to show you what I mean."
+    sms: "Hey Dr. [Name], [Setter Name] here - appreciate you taking the call earlier. I wanted to follow up more clearly: the reason I reached out is to see whether there’s room to make patient flow more predictable for [Clinic Name]. If it’s worth 10 minutes, I’d be happy to show you what I mean."
   },
 };
 

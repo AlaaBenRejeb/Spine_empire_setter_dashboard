@@ -92,7 +92,7 @@ export default function OnboardingPage() {
                     <div className="flex-1">
                        <div className="flex items-center gap-4 mb-4">
                           <span className="text-emerald-500 font-black italic text-2xl uppercase tracking-tighter">Days {phase.days}</span>
-                          <span className="text-slate-500 text-xs font-black uppercase tracking-[0.3em]">— {phase.phase}</span>
+                          <span className="text-slate-500 text-xs font-black uppercase tracking-[0.3em]">- {phase.phase}</span>
                        </div>
                        <h2 className="text-4xl font-black uppercase tracking-tighter italic mb-4">{phase.title}</h2>
                        <p className="text-slate-400 text-sm font-medium mb-8 max-w-2xl">{phase.description}</p>
